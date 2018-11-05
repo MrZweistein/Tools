@@ -102,7 +102,7 @@ namespace touch
 
         static void Parse(string[] args)
         {
-            Log("touch.exe [Version 1.0]");
+            Log("mytouch.exe Version 1.0 (C) 2018 Roger Spiess");
             if (args.Count() == 0)
             {
                 ExitWithHelp();
