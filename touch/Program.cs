@@ -105,7 +105,6 @@ namespace touch
             Log("touch.exe [Version 1.0]");
             if (args.Count() == 0)
             {
-                ExitWithError("No arguments", 1, true);
                 ExitWithHelp();
             }
             Log($"Parsing arguments...", false);
@@ -270,7 +269,6 @@ namespace touch
 
         static void ExitWithHelp()
         {
-            WriteLine("touch.exe [Version 1.0]");
             WriteLine("Options:");
             WriteLine("   -d <directory>     => work with files in <directory>");
             WriteLine("   -r                 => include subdirectories recursively");
