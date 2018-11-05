@@ -227,7 +227,7 @@ namespace touch
                 }
                 else
                 {
-                    ExitWithError("Unknown option", 10, true);
+                    ExitWithError($"Unknown option: {option}", 10, true);
                     ExitWithHelp();
                 }
             }
