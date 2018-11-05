@@ -107,7 +107,6 @@ namespace touch
             {
                 ExitWithHelp();
             }
-            Log($"Parsing arguments...", false);
             string options = "-d,-r,-f,-a,-date,-time,-now,-v,-?";
             var culture = new System.Globalization.CultureInfo("de-DE");
             for (int i = 0; i < args.Count(); i++)
@@ -248,7 +247,6 @@ namespace touch
             {
                 filePattern = "*.*";
             }
-            Log("Done.");
             Log($"Start processing using options: {string.Join(" ", args)}");
         }
 
