@@ -1,8 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿/************************************************************************************************************/
+/*                                                                                                          */
+/*  Touch Clone Version 1.0                                                                                 */
+/*  Entwickelt durch Roger Spiess, Hamburg,  2018                                                           */
+/*  Alle Rechte vorbehalten                                                                                 */
+/*                                                                                                          */
+/************************************************************************************************************/
+using System;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 using System.Text.RegularExpressions;
 using static System.Console;
@@ -12,6 +16,7 @@ namespace touch
     class Program
     {
         static bool directoryOption = false;
+        static bool recursiveOption = false;
         static bool filepatternOption = false;
         static bool allOption = false;
         static bool dateOption = false;
@@ -29,6 +34,7 @@ namespace touch
         {
             Parse(args);
             Process();
+            Log("Done.");
         }
 
         static void Process()
@@ -37,47 +43,56 @@ namespace touch
             {
                 var culture = new System.Globalization.CultureInfo("de-DE");
                 string[] formats = { "dd.MM.yyyy hh:mm:ss" };
-                string[] files = Directory.GetFiles(workingDirectory, filePattern);
+                string[] files = Directory.GetFiles(workingDirectory, filePattern, recursiveOption ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                int i = 0;
+                int e = 0;
                 foreach (string filename in files)
                 {
-                    Log($"Processing file '{filename}' ... ", false);
-                    DateTime current = Directory.GetLastWriteTime(filename);
-                    string currDate = datetime.ToString("dd.MM.yyyy");
-                    string currTime = datetime.ToString("hh:mm:ss");
-                    if (dateOption & !timeOption)
+                    try
                     {
-                        Log($"Change timestamp to {dateString} {currTime} ... ", false);
-                        DateTime timestamp = DateTime.ParseExact(dateString + " " + currTime, formats, culture, System.Globalization.DateTimeStyles.None);
-                        Directory.SetLastWriteTime(filename, timestamp);
+                        Log($"[{++i}] Processing '{filename}'...", false);
+                        DateTime current = Directory.GetLastWriteTime(filename);
+                        string currDate = datetime.ToString("dd.MM.yyyy");
+                        string currTime = datetime.ToString("hh:mm:ss");
+                        if (dateOption & !timeOption)
+                        {
+                            DateTime timestamp = DateTime.ParseExact(dateString + " " + currTime, formats, culture, System.Globalization.DateTimeStyles.None);
+                            Directory.SetLastWriteTime(filename, timestamp);
+                        }
+                        else if (timeOption & !dateOption)
+                        {
+                            DateTime timestamp = DateTime.ParseExact(currDate + " " + timeString, formats, culture, System.Globalization.DateTimeStyles.None);
+                            Directory.SetLastWriteTime(filename, timestamp);
+                        }
+                        else
+                        {
+                            DateTime timestamp = DateTime.ParseExact(dateString + " " + timeString, formats, culture, System.Globalization.DateTimeStyles.None);
+                            Directory.SetLastWriteTime(filename, timestamp);
+                        }
+                        Log("Done");
                     }
-                    else if (timeOption & !dateOption)
+                    catch (IOException)
                     {
-                        Log($"Change timestamp to {currDate} {timeString} ... ", false);
-                        DateTime timestamp = DateTime.ParseExact(currDate + " " + timeString, formats, culture, System.Globalization.DateTimeStyles.None);
-                        Directory.SetLastWriteTime(filename, timestamp);
+                        Log("Error");
+                        e++;
                     }
-                    else
+                    catch (UnauthorizedAccessException)
                     {
-                        Log($"Change timestamp to {dateString} {timeString} ... ", false);
-                        DateTime timestamp = DateTime.ParseExact(dateString + " " + timeString, formats, culture, System.Globalization.DateTimeStyles.None);
-                        Directory.SetLastWriteTime(filename, timestamp);
+                        Log("Error");
+                        e++;
                     }
-                    Log("Done");
                 }
-                Log($"Processed {files.Count()} files.");
+                Log($"Processed {files.Count()} file(s). {e} error(s).");
             }
             catch (UnauthorizedAccessException)
             {
-                ExitWithError("Accessing files: unauthorized access.", 500);
+                ExitWithError("Accessing directory: unauthorized access.", 500);
             }
             catch (PathTooLongException)
             {
                 ExitWithError("Accessing files: path too long", 501);
             }
-            catch (IOException)
-            {
-                ExitWithError("Accessing files: path is a file name", 502);
-            }
+
         }
 
         static bool MemberOf<T>(T compare, params T[] members)
@@ -87,12 +102,15 @@ namespace touch
 
         static void Parse(string[] args)
         {
+            Log("touch.exe [Version 1.0]");
             if (args.Count() == 0)
             {
-                ExitWithError("General: No arguments", 1, true);
+                ExitWithError("No arguments", 1, true);
                 ExitWithHelp();
             }
-            string options = "-d,-f,-a,-date,-time,-now,-v,-?";
+            Log($"Parsing arguments...", false);
+            string options = "-d,-r,-f,-a,-date,-time,-now,-v,-?";
+            var culture = new System.Globalization.CultureInfo("de-DE");
             for (int i = 0; i < args.Count(); i++)
             {
                 bool Inc() => ++i < args.Count();
@@ -117,6 +135,10 @@ namespace touch
                     {
                         ExitWithError("-d option: Missing directory", 100);
                     }
+                }
+                else if (option == "-r")
+                {
+                    recursiveOption = true;
                 }
                 else if (option == "-f")
                 {
@@ -152,9 +174,13 @@ namespace touch
                         string rp = "[0-9]{2}[.][0-9]{2}[.][0-9]{4}";
                         if (!Regex.IsMatch(nextItem, rp))
                         {
-                            ExitWithError($"-date: '{nextItem}' doesn't match the required pattern 'dd.mm.yyyy'", 131);
+                            ExitWithError($"-date option: '{nextItem}' doesn't match the required pattern 'dd.mm.yyyy'", 131);
                         }
                         dateString = nextItem;
+                        if (!DateTime.TryParseExact(dateString, "dd.MM.yyyy", culture, System.Globalization.DateTimeStyles.None, out var test))
+                        {
+                            ExitWithError($"-date option: '{nextItem} is not a correct date", 132);
+                        }
                     }
                     else
                     {
@@ -177,6 +203,10 @@ namespace touch
                             ExitWithError($"-time: '{nextItem}' doesn't match the required pattern 'hh:mm:ss'", 141);
                         }
                         timeString = nextItem;
+                        if (!DateTime.TryParseExact(timeString, "hh:mm:ss", culture, System.Globalization.DateTimeStyles.None, out var test))
+                        {
+                            ExitWithError($"-time option: '{nextItem} is not a correct time", 132);
+                        }
                     }
                     else
                     {
@@ -219,7 +249,8 @@ namespace touch
             {
                 filePattern = "*.*";
             }
-            Log("Parse arguments: Okay.");
+            Log("Done.");
+            Log($"Start processing using options: {string.Join(" ", args)}");
         }
 
         static void ExitWithError(string error, int errorcode, bool dontquit = false)
@@ -239,9 +270,10 @@ namespace touch
 
         static void ExitWithHelp()
         {
-            WriteLine("touch.exe - Change timestamp of files - Version 1.0 - rspSoft");
+            WriteLine("touch.exe [Version 1.0]");
             WriteLine("Options:");
             WriteLine("   -d <directory>     => work with files in <directory>");
+            WriteLine("   -r                 => include subdirectories recursively");
             WriteLine("   -f <filepattern>   => touch files with <filepattern>. Use '*' and '?' for pattern");
             WriteLine("   -a                 => Standard option. touch all files in the directory. Gets ignored if -f option is used");
             WriteLine("   -date <date>       => use <date> for touch. format of <date> is 'dd.mm.yyyy'");
