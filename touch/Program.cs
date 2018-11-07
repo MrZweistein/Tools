@@ -4,11 +4,16 @@
 /*  Entwickelt durch Roger Spiess, Hamburg,  2018                                                           */
 /*  Alle Rechte vorbehalten                                                                                 */
 /*                                                                                                          */
+/*  Version Historie:                                                                                       */
+/*  04-11-2018 Version 1.0                                                                                  */
+/*  07-11-2018 Version 1.1 -R option (file reference) Überarbeitung Optionen + Bugfixes                     */
+/*                                                                                                          */
 /************************************************************************************************************/
 using System;
 using System.Linq;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 using static System.Console;
 
 namespace touch
@@ -23,11 +28,14 @@ namespace touch
         static bool timeOption = false;
         static bool nowOption = false;
         static bool verboseOption = false;
+        static bool fileRefOption = false;
+        static bool touchDirOption = false;
 
         static string workingDirectory = default(string);
         static string filePattern = default(string);
         static string dateString = default(string);
         static string timeString = default(string);
+        static string fileReference = default(string);
         static DateTime datetime = DateTime.Now;
 
         static void Main(string[] args)
@@ -42,8 +50,15 @@ namespace touch
             try
             {
                 var culture = new System.Globalization.CultureInfo("de-DE");
-                string[] formats = { "dd.MM.yyyy hh:mm:ss" };
+                string[] formats = { "dd-MM-yyyy HH:mm:ss" };
                 string[] files = Directory.GetFiles(workingDirectory, filePattern, recursiveOption ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                if (touchDirOption)
+                {
+                    string[] dirs = Directory.GetDirectories(workingDirectory , "*", SearchOption.AllDirectories);
+                    List<string> consolidated = new List<string>(dirs);
+                    consolidated.AddRange(files);
+                    files = consolidated.ToArray();
+                }
                 int i = 0;
                 int e = 0;
                 foreach (string filename in files)
@@ -52,8 +67,8 @@ namespace touch
                     {
                         Log($"[{++i}] Processing '{filename}'...", false);
                         DateTime current = Directory.GetLastWriteTime(filename);
-                        string currDate = datetime.ToString("dd.MM.yyyy");
-                        string currTime = datetime.ToString("hh:mm:ss");
+                        string currDate = datetime.ToString("dd-MM-yyyy");
+                        string currTime = datetime.ToString("HH:mm:ss");
                         if (dateOption & !timeOption)
                         {
                             DateTime timestamp = DateTime.ParseExact(dateString + " " + currTime, formats, culture, System.Globalization.DateTimeStyles.None);
@@ -86,11 +101,11 @@ namespace touch
             }
             catch (UnauthorizedAccessException)
             {
-                ExitWithError("Accessing directory: unauthorized access.", 500);
+                ExitWithError("Accessing directory: unauthorized access.", 200);
             }
             catch (PathTooLongException)
             {
-                ExitWithError("Accessing files: path too long", 501);
+                ExitWithError("Accessing files: path too long", 201);
             }
 
         }
@@ -102,152 +117,241 @@ namespace touch
 
         static void Parse(string[] args)
         {
-            Log("mytouch.exe Version 1.0 (C) 2018 Roger Spiess");
+            Log("mytouch.exe Version 1.1 (C) 2018 Roger Spiess");
             if (args.Count() == 0)
             {
                 ExitWithHelp();
             }
-            string options = "-d,-r,-f,-a,-date,-time,-now,-v,-?";
-            var culture = new System.Globalization.CultureInfo("de-DE");
-            for (int i = 0; i < args.Count(); i++)
+            List<string> _args = new List<string>();
+            foreach(string elem in args)
             {
-                bool Inc() => ++i < args.Count();
-                string option = args[i];
-                if (option == "-d")
+                _args.AddRange(elem.Split('"', ' '));
+            }
+            _args = _args.Where((e) => e != "").ToList();
+            string options = "-w,-r,-rD,-f,-a,-d,-date,-t,-time,-now,-F,-v,-?";
+            var culture = new System.Globalization.CultureInfo("de-DE");
+            for (int i = 0; i < _args.Count(); i++)
+            {
+                bool Inc() => ++i < _args.Count();
+                string option = _args[i];
+                if (option == "-w")
                 {
+                    if (directoryOption)
+                    {
+                        ExitWithError("-d option: Option already exists", 100);
+                    }
                     if (Inc())
                     {
-                        string nextItem = args[i];
+                        string nextItem = _args[i];
                         if (MemberOf(nextItem, options.Split(',')))
                         {
-                            ExitWithError("-d option: Missing directory", 100);
+                            ExitWithError("-d option: Missing directory", 101);
                         }
                         directoryOption = true;
-                        workingDirectory = nextItem;
+                        workingDirectory = nextItem.Trim('"');
                         if (!Directory.Exists(workingDirectory))
                         {
-                            ExitWithError($"-d option: Directory '{workingDirectory}' doesn't exist.", 110);
+                            ExitWithError($"-d option: Directory '{workingDirectory}' doesn't exist.", 102);
                         }
                     }
                     else
                     {
-                        ExitWithError("-d option: Missing directory", 100);
+                        ExitWithError("-d option: Missing directory", 103);
                     }
                 }
                 else if (option == "-r")
                 {
+                    if (recursiveOption | touchDirOption)
+                    {
+                        ExitWithError("-r option: Option already exists", 104);
+                    }
                     recursiveOption = true;
+                }
+                else if (option == "-rD")
+                {
+                    if (touchDirOption | recursiveOption)
+                    {
+                        ExitWithError("-rD option: Option already exists", 105);
+                    }
+                    touchDirOption = true;
+                    recursiveOption = true;
+                }
+                else if (option == "-F")
+                {
+                    if (fileRefOption)
+                    {
+                        ExitWithError("-R option: Option already exists", 106);
+                    }
+                    if (Inc())
+                    {
+                        string nextItem = _args[i];
+                        if (MemberOf(nextItem, options.Split(',')))
+                        {
+                            ExitWithError("-R option: Missing filename", 107);
+                        }
+                        fileRefOption = true;
+                        fileReference = nextItem;
+                    }
+                    else
+                    {
+                        ExitWithError("-R option: Missing filename", 108);
+                    }
                 }
                 else if (option == "-f")
                 {
+                    if (filepatternOption)
+                    {
+                        ExitWithError("-f option: Option already exists", 109);
+                    }
                     if (Inc())
                     {
-                        string nextItem = args[i];
+                        string nextItem = _args[i];
                         if (MemberOf(nextItem, options.Split(',')))
                         {
-                            ExitWithError("-f option: Missing filename or filename pattern", 120);
+                            ExitWithError("-f option: Missing filename or filename pattern", 110);
                         }
                         filepatternOption = true;
                         filePattern = nextItem;
                     }
                     else
                     {
-                        ExitWithError("-f option: Missing filename or filename pattern", 120);
+                        ExitWithError("-f option: Missing filename or filename pattern", 111);
                     }
                 }
                 else if (option == "-a")
                 {
+                    if (allOption)
+                    {
+                        ExitWithError("-a option: Option already exists", 112);
+                    }
                     allOption = true;
                 }
-                else if (option == "-date")
+                else if (option == "-date" || option == "-d")
                 {
+                    if (dateOption)
+                    {
+                        ExitWithError("-date option: Option already exists", 113);
+                    }
                     if (Inc())
                     {
-                        string nextItem = args[i];
+                        string nextItem = _args[i];
                         if (MemberOf(nextItem, options.Split(',')))
                         {
-                            ExitWithError("-date option: Missing date", 130);
+                            ExitWithError("-date option: Missing date", 114);
                         }
                         dateOption = true;
-                        string rp = "[0-9]{2}[.][0-9]{2}[.][0-9]{4}";
+                        string rp = "[0-9]{2}[-][0-9]{2}[-][0-9]{4}";
                         if (!Regex.IsMatch(nextItem, rp))
                         {
-                            ExitWithError($"-date option: '{nextItem}' doesn't match the required pattern 'dd.mm.yyyy'", 131);
+                            ExitWithError($"-date option: '{nextItem}' doesn't match the required pattern 'dd-mm-yyyy'", 115);
                         }
                         dateString = nextItem;
-                        if (!DateTime.TryParseExact(dateString, "dd.MM.yyyy", culture, System.Globalization.DateTimeStyles.None, out var test))
+                        if (!DateTime.TryParseExact(dateString, "dd-MM-yyyy", culture, System.Globalization.DateTimeStyles.None, out var test))
                         {
-                            ExitWithError($"-date option: '{nextItem} is not a correct date", 132);
+                            ExitWithError($"-date option: '{nextItem} is not a correct date", 116);
                         }
                     }
                     else
                     {
-                        ExitWithError("-date option: Missing date", 130);
+                        ExitWithError("-date option: Missing date", 117);
                     }
                 }
-                else if (option == "-time")
+                else if (option == "-time" || option == "-t")
                 {
+                    if (timeOption)
+                    {
+                        ExitWithError("-time option: Option already exists", 118);
+                    }
                     if (Inc())
                     {
-                        string nextItem = args[i];
+                        string nextItem = _args[i];
                         if (MemberOf(nextItem, options.Split(',')))
                         {
-                            ExitWithError("-time option: Missing time", 140);
+                            ExitWithError("-time option: Missing time", 119);
                         }
                         timeOption = true;
                         string rp = "[0-9]{2}[/:][0-9]{2}[/:][0-9]{2}";
                         if (!Regex.IsMatch(nextItem, rp))
                         {
-                            ExitWithError($"-time: '{nextItem}' doesn't match the required pattern 'hh:mm:ss'", 141);
+                            ExitWithError($"-time: '{nextItem}' doesn't match the required pattern 'hh:mm:ss'", 120);
                         }
                         timeString = nextItem;
-                        if (!DateTime.TryParseExact(timeString, "hh:mm:ss", culture, System.Globalization.DateTimeStyles.None, out var test))
+                        if (!DateTime.TryParseExact(timeString, "HH:mm:ss", culture, System.Globalization.DateTimeStyles.None, out var test))
                         {
-                            ExitWithError($"-time option: '{nextItem} is not a correct time", 132);
+                            ExitWithError($"-time option: '{nextItem} is not a correct time", 121);
                         }
                     }
                     else
                     {
-                        ExitWithError("-time option: Missing time", 140);
+                        ExitWithError("-time option: Missing time", 122);
                     }
                 }
                 else if (option == "-now")
                 {
+                    if (nowOption)
+                    {
+                        ExitWithError("-now option: Option already exists", 123);
+                    }
                     nowOption = true;
 
                 }
                 else if (option == "-v")
                 {
+                    if (verboseOption)
+                    {
+                        ExitWithError("-v option: Option already exists", 124);
+                    }
                     verboseOption = true;
                 }
                 else if (option == "-?")
                 {
                     ExitWithHelp();
                 }
-                else
+                else 
                 {
                     ExitWithError($"Unknown option: {option}", 10, true);
                     ExitWithHelp();
                 }
             }
-            nowOption = !(dateOption | timeOption);
-            if (nowOption)
-            {
-                dateOption = true;
-                timeOption = true;
-                dateString = datetime.Date.ToString("dd.MM.yyyy");
-                timeString = datetime.TimeOfDay.ToString("hh:mm:ss");
-            }
-            allOption = !(filepatternOption);
             if (!directoryOption)
             {
                 workingDirectory = Directory.GetCurrentDirectory();
             }
+            if (fileRefOption)
+            {
+                string file = fileReference;
+                try
+                {
+                    if (!File.Exists(file))
+                    {
+                        ExitWithError($"-R option: Cannot find file '{file}'", 125);
+                    }
+                }
+                catch (Exception)
+                {
+                    ExitWithError($"-R option: Incorrent File '{file}'", 126);
+                }
+                dateOption = true;
+                timeOption = true;
+                DateTime fileDT = File.GetLastWriteTime(file);
+                dateString = fileDT.ToString("dd-MM-yyyy");
+                timeString = fileDT.ToString("HH:mm:ss");
+
+            }
+            nowOption = !(dateOption | timeOption | fileRefOption);
+            if (nowOption)
+            {
+                dateOption = true;
+                timeOption = true;
+                dateString = datetime.ToString("dd-MM-yyyy");
+                timeString = datetime.ToString("HH:mm:ss");
+            }
+            allOption = !(filepatternOption);
             if (allOption)
             {
                 filePattern = "*.*";
             }
-            Log($"Start processing using options: {string.Join(" ", args)}");
+            Log($"Start processing using options: {string.Join(" ", _args)}");
         }
 
         static void ExitWithError(string error, int errorcode, bool dontquit = false)
@@ -268,12 +372,13 @@ namespace touch
         static void ExitWithHelp()
         {
             WriteLine("Options:");
-            WriteLine("   -d <directory>     => work with files in <directory>");
-            WriteLine("   -r                 => include subdirectories recursively");
+            WriteLine("   -w <directory>     => work with files in <directory>");
+            WriteLine("   -r[D]              => include subdirectories recursively. Combined with D subdirectories will be touched too");
             WriteLine("   -f <filepattern>   => touch files with <filepattern>. Use '*' and '?' for pattern");
+            WriteLine("   -F filename        => use file as date/time reference. overwrites -now -date -time");
             WriteLine("   -a                 => Standard option. touch all files in the directory. Gets ignored if -f option is used");
-            WriteLine("   -date <date>       => use <date> for touch. format of <date> is 'dd.mm.yyyy'");
-            WriteLine("   -time <time>       => use <time> for touch. format of <time> is 'hh:mm:ss");
+            WriteLine("   -d[ate] <date>     => use <date> for touch. format of <date> is 'dd-mm-yyyy'");
+            WriteLine("   -t[ime] <time>     => use <time> for touch. format of <time> is 'hh:mm:ss");
             WriteLine("   -now               => Standard option. touch with current timestamp. Gets ignored if -date or -time is used");
             WriteLine("   -v                 => verbose mode");
             WriteLine("   -?                 => shows this text and surpresses all other options");
