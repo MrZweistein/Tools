@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FakeInstaller", "FakeInstal
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "touch", "touch\touch.csproj", "{C92B7C20-60E8-48FE-8C2B-0E1EA13211A7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyBuild", "MyBuild\MyBuild.csproj", "{4FAEBCD9-F42C-42D8-83B7-5500DB39C8A5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{C92B7C20-60E8-48FE-8C2B-0E1EA13211A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C92B7C20-60E8-48FE-8C2B-0E1EA13211A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C92B7C20-60E8-48FE-8C2B-0E1EA13211A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4FAEBCD9-F42C-42D8-83B7-5500DB39C8A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4FAEBCD9-F42C-42D8-83B7-5500DB39C8A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4FAEBCD9-F42C-42D8-83B7-5500DB39C8A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4FAEBCD9-F42C-42D8-83B7-5500DB39C8A5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
