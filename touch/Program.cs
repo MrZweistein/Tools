@@ -7,6 +7,7 @@
 /*  Version Historie:                                                                                       */
 /*  04-11-2018 Version 1.0                                                                                  */
 /*  07-11-2018 Version 1.1 -R option (file reference) Überarbeitung Optionen + Bugfixes                     */
+/*  08-11-2018 Version 1.2 Erlauben Zeitangabe mit hh:mm und ss optional                                    */
 /*                                                                                                          */
 /************************************************************************************************************/
 using System;
@@ -54,7 +55,7 @@ namespace touch
                 string[] files = Directory.GetFiles(workingDirectory, filePattern, recursiveOption ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
                 if (touchDirOption)
                 {
-                    string[] dirs = Directory.GetDirectories(workingDirectory , "*", SearchOption.AllDirectories);
+                    string[] dirs = Directory.GetDirectories(workingDirectory, "*", SearchOption.AllDirectories);
                     List<string> consolidated = new List<string>(dirs);
                     consolidated.AddRange(files);
                     files = consolidated.ToArray();
@@ -117,13 +118,13 @@ namespace touch
 
         static void Parse(string[] args)
         {
-            Log("mytouch.exe Version 1.1 (C) 2018 Roger Spiess");
+            Log("mytouch.exe Version 1.2 (C) 2018 Roger Spiess");
             if (args.Count() == 0)
             {
                 ExitWithHelp();
             }
             List<string> _args = new List<string>();
-            foreach(string elem in args)
+            foreach (string elem in args)
             {
                 _args.AddRange(elem.Split('"', ' '));
             }
@@ -240,7 +241,7 @@ namespace touch
                             ExitWithError("-date option: Missing date", 114);
                         }
                         dateOption = true;
-                        string rp = "[0-9]{2}[-][0-9]{2}[-][0-9]{4}";
+                        string rp = "^([0-9]{2}[-][0-9]{2}[-][0-9]{4})$";
                         if (!Regex.IsMatch(nextItem, rp))
                         {
                             ExitWithError($"-date option: '{nextItem}' doesn't match the required pattern 'dd-mm-yyyy'", 115);
@@ -270,12 +271,12 @@ namespace touch
                             ExitWithError("-time option: Missing time", 119);
                         }
                         timeOption = true;
-                        string rp = "[0-9]{2}[/:][0-9]{2}[/:][0-9]{2}";
+                        string rp = "^([0-9]{2}([:][0-9]{2}){1,2})$";
                         if (!Regex.IsMatch(nextItem, rp))
                         {
-                            ExitWithError($"-time: '{nextItem}' doesn't match the required pattern 'hh:mm:ss'", 120);
+                            ExitWithError($"-time: '{nextItem}' doesn't match the required pattern 'hh:mm[:ss]'", 120);
                         }
-                        timeString = nextItem;
+                        timeString = nextItem + (nextItem.Length == 5 ? ":00" : "");
                         if (!DateTime.TryParseExact(timeString, "HH:mm:ss", culture, System.Globalization.DateTimeStyles.None, out var test))
                         {
                             ExitWithError($"-time option: '{nextItem} is not a correct time", 121);
@@ -307,7 +308,7 @@ namespace touch
                 {
                     ExitWithHelp();
                 }
-                else 
+                else
                 {
                     ExitWithError($"Unknown option: {option}", 10, true);
                     ExitWithHelp();
@@ -375,16 +376,16 @@ namespace touch
             WriteLine("   -w <directory>     => work with files in <directory>");
             WriteLine("   -r[D]              => include subdirectories recursively. Combined with D subdirectories will be touched too");
             WriteLine("   -f <filepattern>   => touch files with <filepattern>. Use '*' and '?' for pattern");
-            WriteLine("   -F filename        => use file as date/time reference. overwrites -now -date -time");
+            WriteLine("   -F <file>          => use <file> as date/time reference. overwrites -now -date -time");
             WriteLine("   -a                 => Standard option. touch all files in the directory. Gets ignored if -f option is used");
-            WriteLine("   -d[ate] <date>     => use <date> for touch. format of <date> is 'dd-mm-yyyy'");
-            WriteLine("   -t[ime] <time>     => use <time> for touch. format of <time> is 'hh:mm:ss");
+            WriteLine("   -d[ate] dd-mm-yyyy => date to use");
+            WriteLine("   -t[ime] hh:mm[:ss] => time to use. 24h format");
             WriteLine("   -now               => Standard option. touch with current timestamp. Gets ignored if -date or -time is used");
             WriteLine("   -v                 => verbose mode");
             WriteLine("   -?                 => shows this text and surpresses all other options");
             WriteLine();
-            WriteLine("Usage:");
-            WriteLine("   touch -d .\\directory -a -date 01.01.2018 -time 10:00:00");
+            WriteLine("Examples:");
+            WriteLine("   touch -w .\\directory -a -d 01-01-2018 -t 10:00:00");
             WriteLine("   => Changes timestamp of all files in .\\directory with 01.01.2018 10:00:00");
             WriteLine();
             WriteLine("   touch -f name*.* -now");
