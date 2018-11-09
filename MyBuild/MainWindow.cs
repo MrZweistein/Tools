@@ -10,11 +10,20 @@ using System.Windows.Forms;
 
 namespace MyBuild
 {
-    public partial class MainWindow : Form
+    internal partial class MainWindow : Form
     {
         public MainWindow()
         {
             InitializeComponent();
+
+            ControlBox = true;
+            MinimizeBox = false;
+            MaximizeBox = false;
+            ShowIcon = true;
+            ShowInTaskbar = true;
+            StartPosition = FormStartPosition.CenterScreen;
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+
         }
     }
 }
