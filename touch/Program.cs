@@ -39,6 +39,10 @@ namespace touch
         static string fileReference = default(string);
         static DateTime datetime = DateTime.Now;
 
+        /// <summary>
+        /// Application entry point
+        /// </summary>
+        /// <param name="args"></param>
         static void Main(string[] args)
         {
             Parse(args);
@@ -46,6 +50,10 @@ namespace touch
             Log("Done.");
         }
 
+        /// <summary>
+        /// Main process loop
+        /// touch selected files
+        /// </summary>
         static void Process()
         {
             try
@@ -111,11 +119,22 @@ namespace touch
 
         }
 
+        /// <summary>
+        /// Identify if an item is member of a set of T
+        /// </summary>
+        /// <typeparam name="T">type of the set</typeparam>
+        /// <param name="compare">member to lookup</param>
+        /// <param name="members">set</param>
+        /// <returns>true if found</returns>
         static bool MemberOf<T>(T compare, params T[] members)
         {
             return members.Contains<T>(compare);
         }
 
+        /// <summary>
+        /// Parsing the command line
+        /// </summary>
+        /// <param name="args">command line parameters</param>
         static void Parse(string[] args)
         {
             Log("mytouch.exe Version 1.2 (C) 2018 Roger Spiess");
@@ -355,12 +374,23 @@ namespace touch
             Log($"Start processing using options: {string.Join(" ", _args)}");
         }
 
+        /// <summary>
+        /// Error output method
+        /// </summary>
+        /// <param name="error">Error string</param>
+        /// <param name="errorcode">Error code</param>
+        /// <param name="dontquit">if true, don't quit the application after the call</param>
         static void ExitWithError(string error, int errorcode, bool dontquit = false)
         {
             WriteLine($"Error ({errorcode}): {error}");
             if (!dontquit) Environment.Exit(errorcode);
         }
 
+        /// <summary>
+        /// Output method to the standard console
+        /// </summary>
+        /// <param name="msg">Message</param>
+        /// <param name="line">Add CRLF at the end if true</param>
         static void Log(string msg, bool line = true)
         {
             if (!verboseOption)
@@ -370,6 +400,9 @@ namespace touch
             }
         }
 
+        /// <summary>
+        /// Giving help on the CLI
+        /// </summary>
         static void ExitWithHelp()
         {
             WriteLine("Options:");

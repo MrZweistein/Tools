@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("touch")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("mytouch")]
+[assembly: AssemblyDescription("Modify time stamps of files")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("touch")]
-[assembly: AssemblyCopyright("Copyright ©  2018")]
+[assembly: AssemblyCompany("rspSoft")]
+[assembly: AssemblyProduct("mytouch")]
+[assembly: AssemblyCopyright("Copyright © rspSoft 2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
