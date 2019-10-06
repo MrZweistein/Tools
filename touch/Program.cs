@@ -158,25 +158,25 @@ namespace touch
                 {
                     if (directoryOption)
                     {
-                        ExitWithError("-w option: Option already exists", 100);
+                        ExitWithError("-d option: Option already exists", 100);
                     }
                     if (Inc())
                     {
                         string nextItem = _args[i];
                         if (MemberOf(nextItem, options.Split(',')))
                         {
-                            ExitWithError("-w option: Missing directory", 101);
+                            ExitWithError("-d option: Missing directory", 101);
                         }
                         directoryOption = true;
                         workingDirectory = nextItem.Trim('"');
                         if (!Directory.Exists(workingDirectory))
                         {
-                            ExitWithError($"-w option: Directory '{workingDirectory}' doesn't exist.", 102);
+                            ExitWithError($"-d option: Directory '{workingDirectory}' doesn't exist.", 102);
                         }
                     }
                     else
                     {
-                        ExitWithError("-w option: Missing directory", 103);
+                        ExitWithError("-d option: Missing directory", 103);
                     }
                 }
                 else if (option == "-r")
