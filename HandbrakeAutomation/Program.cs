@@ -36,7 +36,9 @@ namespace HandbrakeAutomation
         static string outputDirectory = default(string);
         static string filePattern = default(string);
         static string options = "-a,-f,-i,-m,-o,-r,-sD,-sD+,-sD-,-sN,-sN+,sN-,-v,-?";
-
+        static string processingPrefix = "";
+        static string filter = @".*(\b\d?\d[.]\d\d\x20\x25.*)";
+        static string filler = new string(' ', 120);
 
         /// <summary>
         /// Application entry point
@@ -56,18 +58,15 @@ namespace HandbrakeAutomation
 
         static void ProcessDataReceived(object sender, DataReceivedEventArgs e)
         {
-            string re = @"Encoding:.*(\d\d[[:punct:]]\d\d\x20\x25).*ETA\x20(\d{2}h\d{2}m\d{2}s)";
             if (!string.IsNullOrEmpty(e.Data))
             {
-                Regex regExp = new Regex(re);
+                //Console.Write($"\r{e.Data}...");
+                Regex regExp = new Regex(filter);
                 Match match = regExp.Match(e.Data);
                 if (match.Success)
                 {
-                    if (regExp.IsMatch(e.Data))
-                    {
-                        string percentage = match.Groups[1].Value;
-                        string eta = match.Groups[2].Value;
-                    }
+                    string output = match.Groups[1].Value;
+                    Log($"{processingPrefix} {output}", false);
                 }
             }
         }
@@ -89,23 +88,24 @@ namespace HandbrakeAutomation
                     string inputfile = Path.GetFileName(filename);
                     try
                     {
-                        Log($"[{++i}] Processing '{inputfile}'...", false);
-                        ProcessStartInfo processStartInfo = new ProcessStartInfo(@"d:\apps\handbrake\handbrakecli.exe")
-                        {
-                            Arguments = @"-i " + inputfile + " -o test",
-                            CreateNoWindow = false,
-                            UseShellExecute = false,
-                            RedirectStandardOutput = true,
-                            RedirectStandardInput = false,
-                        };
+                        processingPrefix = $"\r[{++i}] Processing '{inputfile}'...";
 
-                        using (Process exeProcess = Process.Start(processStartInfo))
+                        using (Process pr = new Process())
                         {
-                            exeProcess.WaitForExit();
-                            Log("...");
-                        };
-
-                        Log("Done");
+                            pr.StartInfo.FileName = @"d:\apps\handbrake\handbrakecli.exe";
+                            pr.StartInfo.Arguments = @"-i """ + filename + @""" -o test.m4v";
+                            pr.StartInfo.CreateNoWindow = true;
+                            pr.StartInfo.UseShellExecute = false;
+                            pr.StartInfo.RedirectStandardOutput = true;
+                            pr.StartInfo.RedirectStandardInput = false;
+                            pr.EnableRaisingEvents = true;
+                            pr.OutputDataReceived += ProcessDataReceived;
+                            pr.Start();
+                            pr.BeginOutputReadLine();
+                            pr.WaitForExit();
+                        }
+                        Log("\r"+filler, false);
+                        Log(processingPrefix+"Done");
                     }
                     catch (IOException)
                     {
@@ -117,7 +117,7 @@ namespace HandbrakeAutomation
                         Log("Error");
                         e++;
                     }
-                    catch
+                    catch (Exception)
                     {
                         Log("Error");
                         e++;
@@ -201,7 +201,7 @@ namespace HandbrakeAutomation
                         ExitWithError(101, option);
                     }
                 }
-                if (option == "-o")
+                else if (option == "-o")
                 {
                     if (outputDirectoryOption)
                     {
@@ -409,7 +409,7 @@ namespace HandbrakeAutomation
             WriteLine("   -v                 => non verbose mode");
             WriteLine("   -?                 => shows this text and surpresses all other options");
             WriteLine();
-            Environment.Exit(0);
+            Environment.Exit(1);
 
         }
     }
