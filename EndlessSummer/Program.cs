@@ -15,6 +15,7 @@ namespace EndlessSummer
             {
                 Console.WriteLine($"Do nothing for {counter} times ... ");
                 System.Threading.Thread.Sleep(100);
+                counter++;
             }
 
         }

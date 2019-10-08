@@ -31,14 +31,16 @@ namespace HandbrakeAutomation
         static bool sortDescending = false;
         static bool allOption = false;
         static bool verboseOption = false;
+        static bool outputDirectoryNotExisting = false;
 
         static string inputDirectory = default(string);
         static string outputDirectory = default(string);
         static string filePattern = default(string);
         static string options = "-a,-f,-i,-m,-o,-r,-sD,-sD+,-sD-,-sN,-sN+,sN-,-v,-?";
         static string processingPrefix = "";
-        static string filter = @".*(\b\d?\d[.]\d\d\x20\x25.*)";
-        static string filler = new string(' ', 120);
+        static string filter = @".*(\b\d?\d[.]\d\d\x20\x25)";
+
+        static Process pr = null;
 
         /// <summary>
         /// Application entry point
@@ -47,116 +49,13 @@ namespace HandbrakeAutomation
         static void Main(string[] args)
         {
             Log("Handbrake Automation Version 1.0 (C) 2019 Roger Spiess");
+            Console.CancelKeyPress += Console_CancelKeyPress;
             if (args.Count() == 0)
             {
                 ExitWithHelp();
             }
             Parse(args);
             Processing();
-            Log("Done.");
-        }
-
-        static void ProcessDataReceived(object sender, DataReceivedEventArgs e)
-        {
-            if (!string.IsNullOrEmpty(e.Data))
-            {
-                //Console.Write($"\r{e.Data}...");
-                Regex regExp = new Regex(filter);
-                Match match = regExp.Match(e.Data);
-                if (match.Success)
-                {
-                    string output = match.Groups[1].Value;
-                    Log($"{processingPrefix} {output}", false);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Main process loop
-        /// touch selected files
-        /// </summary>
-        static void Processing()
-        {
-            try
-            {
-                string[] files = Directory.GetFiles(inputDirectory, filePattern, recursiveOption ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-                int i = 0;
-                int e = 0;
-
-                foreach (string filename in files)
-                {
-                    string inputfile = Path.GetFileName(filename);
-                    try
-                    {
-                        processingPrefix = $"\r[{++i}] Processing '{inputfile}'...";
-
-                        using (Process pr = new Process())
-                        {
-                            pr.StartInfo.FileName = @"d:\apps\handbrake\handbrakecli.exe";
-                            pr.StartInfo.Arguments = @"-i """ + filename + @""" -o test.m4v";
-                            pr.StartInfo.CreateNoWindow = true;
-                            pr.StartInfo.UseShellExecute = false;
-                            pr.StartInfo.RedirectStandardOutput = true;
-                            pr.StartInfo.RedirectStandardInput = false;
-                            pr.EnableRaisingEvents = true;
-                            pr.OutputDataReceived += ProcessDataReceived;
-                            pr.Start();
-                            pr.BeginOutputReadLine();
-                            pr.WaitForExit();
-                        }
-                        Log("\r"+filler, false);
-                        Log(processingPrefix+"Done");
-                    }
-                    catch (IOException)
-                    {
-                        Log("Error");
-                        e++;
-                    }
-                    catch (UnauthorizedAccessException)
-                    {
-                        Log("Error");
-                        e++;
-                    }
-                    catch (Exception)
-                    {
-                        Log("Error");
-                        e++;
-                    }
-                }
-                Log($"Processed {files.Count()} file(s). {e} error(s).");
-            }
-            catch (UnauthorizedAccessException)
-            {
-                ExitWithError("Accessing directory: unauthorized access.", 200);
-            }
-            catch (PathTooLongException)
-            {
-                ExitWithError("Accessing files: path too long", 201);
-            }
-
-        }
-
-        /// <summary>
-        /// Identify if an item is member of a set of T
-        /// </summary>
-        /// <typeparam name="T">type of the set</typeparam>
-        /// <param name="compare">member to lookup</param>
-        /// <param name="members">set</param>
-        /// <returns>true if found</returns>
-        static bool MemberOf<T>(T compare, params T[] members)
-        {
-            return members.Contains<T>(compare);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="compare"></param>
-        /// <param name="memberstring"></param>
-        /// <returns></returns>
-        static bool MemberOf(string compare, string memberstring)
-        {
-            return MemberOf(compare, memberstring.Split(','));
         }
 
         /// <summary>
@@ -165,11 +64,11 @@ namespace HandbrakeAutomation
         /// <param name="args">command line parameters</param>
         static void Parse(string[] args)
         {
-            bool outputDirectoryNotExisting = false;
+            
             List<string> _args = new List<string>();
             foreach (string elem in args)
             {
-                _args.AddRange(elem.Split('"', ' '));
+                _args.AddRange(elem.Split('"'));
             }
             _args = _args.Where((e) => e != "").ToList();
             for (int i = 0; i < _args.Count(); i++)
@@ -191,7 +90,15 @@ namespace HandbrakeAutomation
                         }
                         inputDirectoryOption = true;
                         inputDirectory = nextItem.Trim('"');
-                        if (!Directory.Exists(inputDirectory))
+                        try
+                        {
+                            inputDirectory = Path.GetFullPath(inputDirectory);
+                            if (!Directory.Exists(inputDirectory))
+                            {
+                                ExitWithError(102, $"{option} '{inputDirectory}'");
+                            }
+                        }
+                        catch (Exception)
                         {
                             ExitWithError(102, $"{option} '{inputDirectory}'");
                         }
@@ -216,6 +123,7 @@ namespace HandbrakeAutomation
                         }
                         outputDirectoryOption = true;
                         outputDirectory = nextItem.Trim('"');
+                        outputDirectory = Path.GetFullPath(outputDirectory);
                         outputDirectoryNotExisting = !Directory.Exists(outputDirectory);
                     }
                     else
@@ -314,16 +222,157 @@ namespace HandbrakeAutomation
             {
                 inputDirectory = Directory.GetCurrentDirectory();
             }
+            if (!outputDirectoryOption)
+            {
+                outputDirectory = inputDirectory;
+            }
             if (!createDirectoryOption & outputDirectoryNotExisting)
             {
                 ExitWithError(102, $"-o '{outputDirectory}'");
             }
-            allOption = !(filepatternOption | inputDirectoryOption);
-            if (allOption)
+            if (allOption | !filepatternOption)
             {
-                filePattern = "*.*";
+                filePattern = "*.mkv";
             }
             Log($"Start processing using options: {string.Join(" ", _args)}");
+        }
+
+        static void ProcessDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(e.Data))
+            {
+                //Console.Write($"\r{e.Data}...");
+                Regex regExp = new Regex(filter);
+                Match match = regExp.Match(e.Data);
+                if (match.Success)
+                {
+                    string output = match.Groups[1].Value;
+                    Log($"{processingPrefix} {output} ", false);
+                }
+            }
+        }
+
+        private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
+        {
+            if (pr != null)
+            {
+                if (!pr.HasExited)
+                {
+                    pr.CancelOutputRead();
+                    pr.Kill();
+                    pr.Close();
+                    pr = null;
+                }
+                Log();
+                ExitWithError(998);
+            }
+        }
+
+        /// <summary>
+        /// Main process loop
+        /// touch selected files
+        /// </summary>
+        static void Processing()
+        {
+            try
+            {
+                string[] files = Directory.GetFiles(inputDirectory, filePattern, recursiveOption ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                int i = 0;
+                int e = 0;
+
+                void Error() { Log(processingPrefix + " Failed  "); e++; };
+
+                if (createDirectoryOption & outputDirectoryNotExisting) Directory.CreateDirectory(outputDirectory);
+
+                foreach (string filepath in files)
+                {
+                    string inputfile = Path.GetFileName(filepath);
+                    string outputfile = Path.Combine(outputDirectory, Path.ChangeExtension(inputfile, ".m4v"));
+                    try
+                    {
+                        string executable = @"d:\apps\handbrake\handbrakecli.exe";
+                        string arguments = "";
+                        arguments += $@"--preset ""Fast 1080p30"" ";
+                        arguments += $@"-i ""{filepath}"" ";
+                        arguments += $@"-o ""{outputfile}"" ";
+                        arguments += $@"--markers ";
+                        arguments += $@"--align-av ";
+                        processingPrefix = $"\r[{++i}] Processing '{inputfile}'...";
+
+                        DateTime start = DateTime.Now;
+
+                        using (pr = new Process())
+                        {
+                            pr.StartInfo.FileName = executable;
+                            pr.StartInfo.Arguments = arguments;
+                            pr.StartInfo.CreateNoWindow = true;
+                            pr.StartInfo.UseShellExecute = false;
+                            pr.StartInfo.RedirectStandardOutput = true;
+                            pr.StartInfo.RedirectStandardInput = false;
+                            pr.EnableRaisingEvents = true;
+                            pr.OutputDataReceived += ProcessDataReceived;
+                            pr.Start();
+                            pr.BeginOutputReadLine();
+                            pr.WaitForExit();
+                            if (pr.ExitCode != 0)
+                            {
+                                Error();
+
+                            }
+                            else
+                            {
+                                Log(processingPrefix + " Done   ");
+
+                            }
+                        }
+                    }
+                    catch (IOException)
+                    {
+                        Error();
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        Error();
+                    }
+                    catch (Exception)
+                    {
+                        Error();
+                    }
+                }
+                Log($"Processed {files.Count()} file(s). {e} error(s).");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                ExitWithError("Accessing directory: unauthorized access.", 200);
+            }
+            catch (PathTooLongException)
+            {
+                ExitWithError("Accessing files: path too long", 201);
+            }
+
+        }
+
+        /// <summary>
+        /// Identify if an item is member of a set of T
+        /// </summary>
+        /// <typeparam name="T">type of the set</typeparam>
+        /// <param name="compare">member to lookup</param>
+        /// <param name="members">set</param>
+        /// <returns>true if found</returns>
+        static bool MemberOf<T>(T compare, params T[] members)
+        {
+            return members.Contains<T>(compare);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="compare"></param>
+        /// <param name="memberstring"></param>
+        /// <returns></returns>
+        static bool MemberOf(string compare, string memberstring)
+        {
+            return MemberOf(compare, memberstring.Split(','));
         }
 
         /// <summary>
@@ -351,6 +400,9 @@ namespace HandbrakeAutomation
                     break;
                 case 104:
                     error = "Sort option was already defined";
+                    break;
+                case 998:
+                    error = "Canceled by user";
                     break;
                 case 999:
                     error = "unknown option";
@@ -383,7 +435,7 @@ namespace HandbrakeAutomation
         /// </summary>
         /// <param name="msg">Message</param>
         /// <param name="line">Add CRLF at the end if true</param>
-        static void Log(string msg, bool line = true)
+        static void Log(string msg = "", bool line = true)
         {
             if (!verboseOption)
             {
@@ -398,14 +450,14 @@ namespace HandbrakeAutomation
         static void ExitWithHelp()
         {
             WriteLine("Available options:");
-            WriteLine("   -a                 => Standard option. convert all files in the directory. Ignored if -f or -i option is used");
+            WriteLine("   -a                 => Standard option. Encode all files in the directory. Ignored if -f or -i option is used");
             WriteLine("   -i <directory>     => work with files in <directory>");
             WriteLine("   -r                 => include subdirectories recursively. ");
             WriteLine("   -sD[+|-]           => sort input files by date, +=ascending, -=descending; Default: ascending");
             WriteLine("   -sN[+|-]           => sort input files by name, +=ascending, -=descending; Default: ascending");
-            WriteLine("   -f <filepattern>   => touch files with <filepattern>. Use '*' and '?' for pattern");
-            WriteLine("   -o <directory>     => output directory");
-            WriteLine("   -m                 => create non-existing directories");
+            WriteLine("   -f <filepattern>   => Encode files with <filepattern>. Use '*' and '?' for pattern");
+            WriteLine("   -o <directory>     => Output to <directory>");
+            WriteLine("   -m                 => create non-existing directory");
             WriteLine("   -v                 => non verbose mode");
             WriteLine("   -?                 => shows this text and surpresses all other options");
             WriteLine();
