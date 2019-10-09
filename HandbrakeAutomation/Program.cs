@@ -35,6 +35,7 @@ namespace HandbrakeAutomation
         static bool prefixOption = false;
         static bool countStartOption = false;
         static bool countWidthOption = false;
+        static bool listOption = false;
 
         static string inputDirectory = default(string);
         static string outputDirectory = default(string);
@@ -223,7 +224,7 @@ namespace HandbrakeAutomation
                         ExitWithError(104, option);
                     }
                     sortByDateOption = true;
-                    if (option == "sD-")
+                    if (option == "-sD-")
                     {
                         sortDescending = true;
                     }
@@ -235,7 +236,7 @@ namespace HandbrakeAutomation
                         ExitWithError(104, option);
                     }
                     sortByNameOption = true;
-                    if (option == "sN-")
+                    if (option == "-sN-")
                     {
                         sortDescending = true;
                     }
@@ -284,6 +285,14 @@ namespace HandbrakeAutomation
                         ExitWithError(100, option);
                     }
                     allOption = true;
+                }
+                else if (option == "-list")
+                {
+                    if (listOption)
+                    {
+                        ExitWithError(100, option);
+                    }
+                    listOption = true;
                 }
                 else if (option == "-v")
                 {
@@ -360,6 +369,8 @@ namespace HandbrakeAutomation
         {
             try
             {
+                DateTime startedEncoding = DateTime.Now;
+
                 string[] files = Directory.GetFiles(inputDirectory, filePattern, recursiveOption ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
                 int i = 0;
                 int e = 0;
@@ -376,7 +387,7 @@ namespace HandbrakeAutomation
                         }
                         else
                         {
-                            files = files.OrderByDescending(q => File.GetCreationTime(q)).ToArray();
+                            files = files.OrderByDescending(q => File.GetCreationTime(q).ToString()).ToArray();
                         }
                     }
                     if (sortByNameOption)
@@ -394,7 +405,7 @@ namespace HandbrakeAutomation
 
                 // Create folder if not existing
                 if (createDirectoryOption & outputDirectoryNotExisting) Directory.CreateDirectory(outputDirectory);
-
+                if (listOption) Log("!!! List mode !!!");
                 Log($"Found {files.Length} files to encode...");
 
                 string sourcePath = "";
@@ -426,31 +437,44 @@ namespace HandbrakeAutomation
                         arguments += $@"-o ""{outputfile}"" ";
                         arguments += $@"--markers ";
                         arguments += $@"--align-av ";
-                        processingPrefix = $"\r[{++i}] Encoding '{inputfile}' -> '{Path.GetFileName(outputfile)}' ...";
 
-                        DateTime start = DateTime.Now;
+                        processingPrefix = $"\r[{++i}] Encoding '{inputfile}' -> '{Path.GetFileName(outputfile)}' ";
 
-                        using (pr = new Process())
+                        DateTime started = DateTime.Now;
+
+                        if (!listOption)
                         {
-                            pr.StartInfo.FileName = executable;
-                            pr.StartInfo.Arguments = arguments;
-                            pr.StartInfo.CreateNoWindow = true;
-                            pr.StartInfo.UseShellExecute = false;
-                            pr.StartInfo.RedirectStandardOutput = true;
-                            pr.StartInfo.RedirectStandardInput = false;
-                            pr.EnableRaisingEvents = true;
-                            pr.OutputDataReceived += ProcessDataReceived;
-                            pr.Start();
-                            pr.BeginOutputReadLine();
-                            pr.WaitForExit();
-                            if (pr.ExitCode != 0)
+                            using (pr = new Process())
                             {
-                                FailedMessage();
-                            }
-                            else
-                            {
-                                Log(processingPrefix + " Done   ");
-                            }
+                                pr.StartInfo.FileName = executable;
+                                pr.StartInfo.Arguments = arguments;
+                                pr.StartInfo.CreateNoWindow = true;
+                                pr.StartInfo.UseShellExecute = false;
+                                pr.StartInfo.RedirectStandardOutput = true;
+                                pr.StartInfo.RedirectStandardInput = false;
+                                pr.EnableRaisingEvents = true;
+                                pr.OutputDataReceived += ProcessDataReceived;
+                                pr.Start();
+                                pr.BeginOutputReadLine();
+                                pr.WaitForExit();
+
+                                DateTime ended = DateTime.Now;
+                                TimeSpan span = ended.Subtract(started);
+                                string duration = $"{span.Hours}h{span.Minutes}m{span.Seconds}s";
+
+                                if (pr.ExitCode != 0)
+                                {
+                                    FailedMessage();
+                                }
+                                else
+                                {
+                                    Log($"{processingPrefix} Done in {duration}");
+                                }
+                            } 
+                        }
+                        else
+                        {
+                            Log(processingPrefix);
                         }
                     }
                     catch (IOException)
@@ -467,7 +491,9 @@ namespace HandbrakeAutomation
                     }
                     c++;
                 }
-                Log($"Processed {files.Count()} file(s). {e} error(s).");
+                TimeSpan ospan = DateTime.Now.Subtract(startedEncoding);
+                string oduration = $"{ospan.Hours}h{ospan.Minutes}m{ospan.Seconds}s";
+                Log($"Processed {files.Count()} file(s) with {e} error(s). Processing time: {oduration}");
             }
             catch (UnauthorizedAccessException)
             {
@@ -584,19 +610,20 @@ namespace HandbrakeAutomation
         static void ExitWithHelp()
         {
             WriteLine("Available options:");
-            WriteLine("   -a                 => Standard option. Encode all files in the directory. Ignored if -f or -i option is used");
+            WriteLine("   -a                 => encode all files in the directory. Ignored if -f or -i option is used");
             WriteLine("   -i <directory>     => work with files in <directory>");
             WriteLine("   -r                 => include subdirectories recursively. ");
-            //WriteLine("   -sD[+|-]           => sort input files by date, +=ascending, -=descending; Default: ascending");
-            //WriteLine("   -sN[+|-]           => sort input files by name, +=ascending, -=descending; Default: ascending");
-            WriteLine("   -f <filepattern>   => Encode files with <filepattern>. Use '*' and '?' for pattern");
-            WriteLine("   -o <directory>     => Output to <directory>");
+            WriteLine("   -sD[+|-]           => additional sort of files by date, +=ascending, -=descending; Default: ascending");
+            WriteLine("   -sN[+|-]           => additional sort input files by name, +=ascending, -=descending; Default: ascending");
+            WriteLine("   -f <filepattern>   => encode files with <filepattern>. Use '*' and '?' for pattern");
+            WriteLine("   -o <directory>     => output to <directory>");
             WriteLine("   -m                 => create non-existing directory");
             WriteLine("   -n <prefix>        => output filename prefix. output filenames will look like \"myname01.w4v\"");
             WriteLine("   -s <start>         => Counter starts at value <start>. Default: 1. Ignored if no -n option");
             WriteLine("   -w <width>         => Counter will be added with <width> digits. Default: 2. Ignored if no -n option");
-            WriteLine("   -v                 => non verbose mode");
+            WriteLine("   -v                 => non verbose (silent) mode");
             WriteLine("   -?                 => shows this text and surpresses all other options");
+            WriteLine("   -list              => no encoding, just listing input and output files.");
             WriteLine();
             Environment.Exit(1);
 

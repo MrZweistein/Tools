@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,7 +18,8 @@ namespace TestSomethings
         static void Main(string[] args)
         {
             Console.CancelKeyPress += Console_CancelKeyPress;
-            Processing();
+            Investigating();
+            //Processing();
 
         }
 
@@ -49,6 +51,32 @@ namespace TestSomethings
             if (!string.IsNullOrEmpty(e.Data))
             {
                 Console.Write($"\r{processingPrefix}{e.Data}");
+            }
+        }
+
+        static void Investigating()
+        {
+            string path = @"e:\ripping\";
+            string pattern = @"*.mkv";
+            string[] files = Directory.GetFiles(path, pattern, SearchOption.AllDirectories);
+            Console.WriteLine($"{files.Length} files ...");
+            foreach (var filepath in files)
+            {
+                Console.WriteLine($"{filepath}  {File.GetCreationTime(filepath).ToString()}");
+            }
+
+            Console.WriteLine("Sorted date descending");
+            files = files.OrderByDescending(e => File.GetCreationTime(e).ToString()).ToArray();
+            foreach (var filepath in files)
+            {
+                Console.WriteLine($"{filepath}  {File.GetCreationTime(filepath).ToString()}");
+            }
+
+            Console.WriteLine("Sorted name descending");
+            files = files.OrderByDescending(e => e).ToArray();
+            foreach (var filepath in files)
+            {
+                Console.WriteLine($"{filepath}  {File.GetCreationTime(filepath).ToString()}");
             }
         }
 
