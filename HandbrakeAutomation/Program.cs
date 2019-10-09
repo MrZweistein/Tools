@@ -32,10 +32,16 @@ namespace HandbrakeAutomation
         static bool allOption = false;
         static bool verboseOption = false;
         static bool outputDirectoryNotExisting = false;
+        static bool prefixOption = false;
+        static bool countStartOption = false;
+        static bool countWidthOption = false;
 
         static string inputDirectory = default(string);
         static string outputDirectory = default(string);
         static string filePattern = default(string);
+        static string filePrefix = default(string);
+        static int countStart = 1;
+        static int countWidth = 2;
         static string options = "-a,-f,-i,-m,-o,-r,-sD,-sD+,-sD-,-sN,-sN+,sN-,-v,-?";
         static string processingPrefix = "";
         static string filter = @".*(\b\d?\d[.]\d\d\x20\x25)";
@@ -64,7 +70,7 @@ namespace HandbrakeAutomation
         /// <param name="args">command line parameters</param>
         static void Parse(string[] args)
         {
-            
+
             List<string> _args = new List<string>();
             foreach (string elem in args)
             {
@@ -129,6 +135,85 @@ namespace HandbrakeAutomation
                     else
                     {
                         ExitWithError(101, option);
+                    }
+                }
+                else if (option == "-n")
+                {
+                    if (prefixOption)
+                    {
+                        ExitWithError(100, option);
+                    }
+                    if (Inc())
+                    {
+                        string nextItem = _args[i];
+                        if (MemberOf(nextItem, options.Split(',')))
+                        {
+                            ExitWithError(103, option);
+                        }
+                        prefixOption = true;
+                        filePrefix = nextItem;
+                    }
+                    else
+                    {
+                        ExitWithError(103, option);
+                    }
+                }
+                else if (option == "-s")
+                {
+                    if (countStartOption)
+                    {
+                        ExitWithError(100, option);
+                    }
+                    if (Inc())
+                    {
+                        string nextItem = _args[i];
+                        if (MemberOf(nextItem, options.Split(',')))
+                        {
+                            ExitWithError(106, option);
+                        }
+                        if (!int.TryParse(nextItem, out int number))
+                        {
+                            ExitWithError(105, $"{option} {nextItem}");
+                        }
+                        if (number < 0)
+                        {
+                            ExitWithError(105, $"{option} {nextItem}");
+                        }
+                        countStartOption = true;
+                        countStart = number;
+                    }
+                    else
+                    {
+                        ExitWithError(103, option);
+                    }
+                }
+                else if (option == "-w")
+                {
+                    if (countWidthOption)
+                    {
+                        ExitWithError(100, option);
+                    }
+                    if (Inc())
+                    {
+                        string nextItem = _args[i];
+                        if (MemberOf(nextItem, options.Split(',')))
+                        {
+                            ExitWithError(106, option);
+                        }
+                        if (!int.TryParse(nextItem, out int number))
+                        {
+                            ExitWithError(105, $"{option} {nextItem}");
+                        }
+                        if (number < 1 | number > 5)
+                        {
+                            ExitWithError(105, $"{option} {nextItem}");
+                        }
+                        countWidthOption = true;
+                        countWidth = number;
+                    }
+                    else
+                    {
+                        ExitWithError(103, option);
                     }
                 }
                 else if (MemberOf(option, "-sD,-sD+,-sD-"))
@@ -234,14 +319,13 @@ namespace HandbrakeAutomation
             {
                 filePattern = "*.mkv";
             }
-            Log($"Start processing using options: {string.Join(" ", _args)}");
+            //Log($"Start processing using options: {string.Join(" ", _args)}");
         }
 
         static void ProcessDataReceived(object sender, DataReceivedEventArgs e)
         {
             if (!string.IsNullOrEmpty(e.Data))
             {
-                //Console.Write($"\r{e.Data}...");
                 Regex regExp = new Regex(filter);
                 Match match = regExp.Match(e.Data);
                 if (match.Success)
@@ -279,15 +363,60 @@ namespace HandbrakeAutomation
                 string[] files = Directory.GetFiles(inputDirectory, filePattern, recursiveOption ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
                 int i = 0;
                 int e = 0;
+                int c = countStart;
 
-                void Error() { Log(processingPrefix + " Failed  "); e++; };
+                // Sort files if asked for (uses full file path)
+                if (sortByDateOption | sortByNameOption)
+                {
+                    if (sortByDateOption)
+                    {
+                        if (!sortDescending)
+                        {
+                            files = files.OrderBy(q => File.GetCreationTime(q).ToString()).ToArray();
+                        }
+                        else
+                        {
+                            files = files.OrderByDescending(q => File.GetCreationTime(q)).ToArray();
+                        }
+                    }
+                    if (sortByNameOption)
+                    {
+                        if (!sortDescending)
+                        {
+                            files = files.OrderBy(q => q).ToArray();
+                        }
+                        else
+                        {
+                            files = files.OrderByDescending(q => q).ToArray();
+                        }
+                    }
+                }
 
+                // Create folder if not existing
                 if (createDirectoryOption & outputDirectoryNotExisting) Directory.CreateDirectory(outputDirectory);
 
+                Log($"Found {files.Length} files to encode...");
+
+                string sourcePath = "";
+                void FailedMessage() { Log(processingPrefix + " Failed  "); e++; };
                 foreach (string filepath in files)
                 {
+                    string outputfile;
                     string inputfile = Path.GetFileName(filepath);
-                    string outputfile = Path.Combine(outputDirectory, Path.ChangeExtension(inputfile, ".m4v"));
+                    if (sourcePath != Path.GetDirectoryName(filepath))
+                    {
+                        sourcePath = Path.GetDirectoryName(filepath);
+                        Log($"Source folder '{sourcePath}'");
+                    }
+                    if (prefixOption)
+                    {
+                        string fmt = new string('0', countWidth);
+                        outputfile = Path.Combine(outputDirectory, filePrefix + c.ToString(fmt) + ".m4v");
+                    }
+                    else
+                    {
+                        outputfile = Path.Combine(outputDirectory, Path.ChangeExtension(inputfile, ".m4v"));
+                    }
                     try
                     {
                         string executable = @"d:\apps\handbrake\handbrakecli.exe";
@@ -297,7 +426,7 @@ namespace HandbrakeAutomation
                         arguments += $@"-o ""{outputfile}"" ";
                         arguments += $@"--markers ";
                         arguments += $@"--align-av ";
-                        processingPrefix = $"\r[{++i}] Processing '{inputfile}'...";
+                        processingPrefix = $"\r[{++i}] Encoding '{inputfile}' -> '{Path.GetFileName(outputfile)}' ...";
 
                         DateTime start = DateTime.Now;
 
@@ -316,28 +445,27 @@ namespace HandbrakeAutomation
                             pr.WaitForExit();
                             if (pr.ExitCode != 0)
                             {
-                                Error();
-
+                                FailedMessage();
                             }
                             else
                             {
                                 Log(processingPrefix + " Done   ");
-
                             }
                         }
                     }
                     catch (IOException)
                     {
-                        Error();
+                        FailedMessage();
                     }
                     catch (UnauthorizedAccessException)
                     {
-                        Error();
+                        FailedMessage();
                     }
                     catch (Exception)
                     {
-                        Error();
+                        FailedMessage();
                     }
+                    c++;
                 }
                 Log($"Processed {files.Count()} file(s). {e} error(s).");
             }
@@ -401,6 +529,12 @@ namespace HandbrakeAutomation
                 case 104:
                     error = "Sort option was already defined";
                     break;
+                case 105:
+                    error = "Not a valid number";
+                    break;
+                case 106:
+                    error = "missing value";
+                    break;
                 case 998:
                     error = "Canceled by user";
                     break;
@@ -453,11 +587,14 @@ namespace HandbrakeAutomation
             WriteLine("   -a                 => Standard option. Encode all files in the directory. Ignored if -f or -i option is used");
             WriteLine("   -i <directory>     => work with files in <directory>");
             WriteLine("   -r                 => include subdirectories recursively. ");
-            WriteLine("   -sD[+|-]           => sort input files by date, +=ascending, -=descending; Default: ascending");
-            WriteLine("   -sN[+|-]           => sort input files by name, +=ascending, -=descending; Default: ascending");
+            //WriteLine("   -sD[+|-]           => sort input files by date, +=ascending, -=descending; Default: ascending");
+            //WriteLine("   -sN[+|-]           => sort input files by name, +=ascending, -=descending; Default: ascending");
             WriteLine("   -f <filepattern>   => Encode files with <filepattern>. Use '*' and '?' for pattern");
             WriteLine("   -o <directory>     => Output to <directory>");
             WriteLine("   -m                 => create non-existing directory");
+            WriteLine("   -n <prefix>        => output filename prefix. output filenames will look like \"myname01.w4v\"");
+            WriteLine("   -s <start>         => Counter starts at value <start>. Default: 1. Ignored if no -n option");
+            WriteLine("   -w <width>         => Counter will be added with <width> digits. Default: 2. Ignored if no -n option");
             WriteLine("   -v                 => non verbose mode");
             WriteLine("   -?                 => shows this text and surpresses all other options");
             WriteLine();
