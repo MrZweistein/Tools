@@ -21,6 +21,9 @@ namespace HandbrakeAutomation
 {
     class Program
     {
+        /// <summary>
+        /// Flags for checking if an option is used
+        /// </summary>
         static bool inputDirectoryOption = false;
         static bool outputDirectoryOption = false;
         static bool recursiveOption = false;
@@ -37,16 +40,26 @@ namespace HandbrakeAutomation
         static bool countWidthOption = false;
         static bool listOption = false;
 
-        static string inputDirectory = default(string);
-        static string outputDirectory = default(string);
-        static string filePattern = default(string);
-        static string filePrefix = default(string);
+        /// <summary>
+        /// Stores for option parameters
+        /// </summary>
+        static string inputDirectory = default;
+        static string outputDirectory = default;
+        static string filePattern = default;
+        static string filePrefix = default;
         static int countStart = 1;
         static int countWidth = 2;
-        static string options = "-a,-f,-i,-m,-o,-r,-sD,-sD+,-sD-,-sN,-sN+,sN-,-v,-?";
         static string processingPrefix = "";
-        static string filter = @".*(\b\d?\d[.]\d\d\x20\x25)";
 
+        /// <summary>
+        /// Constant strings
+        /// </summary>
+        static readonly string options = "-a,-f,-i,-m,-o,-r,-sD,-sD+,-sD-,-sN,-sN+,sN-,-v,-?,-list";
+        static readonly string filter = @".*(\b\d?\d[.]\d\d\x20\x25)";
+
+        /// <summary>
+        /// Sub-Process reference variable
+        /// </summary>
         static Process pr = null;
 
         /// <summary>
@@ -62,7 +75,7 @@ namespace HandbrakeAutomation
                 ExitWithHelp();
             }
             Parse(args);
-            Processing();
+            Encoding();
         }
 
         /// <summary>
@@ -331,6 +344,11 @@ namespace HandbrakeAutomation
             //Log($"Start processing using options: {string.Join(" ", _args)}");
         }
 
+        /// <summary>
+        /// Event response of redirected Console output. Filters output
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         static void ProcessDataReceived(object sender, DataReceivedEventArgs e)
         {
             if (!string.IsNullOrEmpty(e.Data))
@@ -345,6 +363,11 @@ namespace HandbrakeAutomation
             }
         }
 
+        /// <summary>
+        /// Event response to Ctrl-C in the command line. Ends forked processes and exits application
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
         {
             if (pr != null)
@@ -362,10 +385,9 @@ namespace HandbrakeAutomation
         }
 
         /// <summary>
-        /// Main process loop
-        /// touch selected files
+        /// Main process loop: Call HandbrakeCLI to encode files
         /// </summary>
-        static void Processing()
+        static void Encoding()
         {
             try
             {
@@ -444,6 +466,7 @@ namespace HandbrakeAutomation
 
                         if (!listOption)
                         {
+                            // Setup the process environment and call process
                             using (pr = new Process())
                             {
                                 pr.StartInfo.FileName = executable;
@@ -519,7 +542,7 @@ namespace HandbrakeAutomation
         }
 
         /// <summary>
-        /// 
+        /// Simplified version for strings of MemberOf
         /// </summary>
         /// <param name="compare"></param>
         /// <param name="memberstring"></param>
@@ -618,12 +641,12 @@ namespace HandbrakeAutomation
             WriteLine("   -f <filepattern>   => encode files with <filepattern>. Use '*' and '?' for pattern");
             WriteLine("   -o <directory>     => output to <directory>");
             WriteLine("   -m                 => create non-existing directory");
-            WriteLine("   -n <prefix>        => output filename prefix. output filenames will look like \"myname01.w4v\"");
+            WriteLine("   -n <prefix>        => output filename prefix. output filenames will look like \"prefix01.w4v\"");
             WriteLine("   -s <start>         => Counter starts at value <start>. Default: 1. Ignored if no -n option");
             WriteLine("   -w <width>         => Counter will be added with <width> digits. Default: 2. Ignored if no -n option");
             WriteLine("   -v                 => non verbose (silent) mode");
             WriteLine("   -?                 => shows this text and surpresses all other options");
-            WriteLine("   -list              => no encoding, just listing input and output files.");
+            WriteLine("   -list              => no encoding, just listing input and output files based on the options");
             WriteLine();
             Environment.Exit(1);
 
