@@ -26,15 +26,16 @@ namespace HBBatch
             InitializeComponent();
 
             iniFile = new IniFile();
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+
 
             this.Text = "HBBatch 1.0";
             this.StartPosition = FormStartPosition.CenterScreen;
             btnOpenFileHandbrakeCLI.Click += (s, e) => LocateHandbrakeCLIExecutable();
             btnOpenInputFolder.Click += (s, e) => SelectInputFolder();
             btnOpenOutputFolder.Click += (s, e) => SelectOutputFolder();
-            btnExit.Click += (s, e) => { SaveSettings(); iniFile.SaveToDisk(); Application.Exit(); };
+            btnExit.Click += (s, e) => { SaveSettings(); Application.Exit(); };
             btnCancel.Enabled = false;
-            btnSimulate.Enabled = true;
 
             startAt.Minimum = 0;
             digits.Minimum = 1;
@@ -67,9 +68,9 @@ namespace HBBatch
 
             btnEncode.Click += (s, e) => StartEncode();
             btnCancel.Click += (s, e) => encodeThread?.Abort();
-            progressBar.Visible = false;
-            Log.Visible = false;
             EncodeWorker.Progress += EncodeWorker_Progress;
+            lastStatus.Text = "-";
+            currentStatus.Text = "-";
 
         }
 
@@ -111,6 +112,7 @@ namespace HBBatch
             iniFile.SetPrefix(prefix.Text);
             iniFile.SetStartAt((int)startAt.Value);
             iniFile.SetDigits((int)digits.Value);
+            iniFile.SaveToDisk();
         }
 
         private void SortInputEnable(bool enable)
@@ -160,23 +162,9 @@ namespace HBBatch
             ValidateSetting(pathHandbrakeCLI);
         }
 
-        //private void CancelEncode()
-        //{
-        //    if (handbrakeProcess != null)
-        //    {
-        //        if (!handbrakeProcess.HasExited)
-        //        {
-        //            handbrakeProcess.CancelOutputRead();
-        //            handbrakeProcess.Kill();
-        //            handbrakeProcess.Close();
-        //            handbrakeProcess = null;
-        //        }
-        //    }
-        //}
-
-
         private void StartEncode()
         {
+            SaveSettings();
             encodeThread = new Thread(EncodeWorker.EncodeThread);
             encodeParam = new EncodeParam()
             {
@@ -203,13 +191,16 @@ namespace HBBatch
                 case Status.Setup:
                     Action Setup = () =>
                     {
+                        groupHandbrake.Enabled = false;
+                        groupInput.Enabled = false;
+                        groupOutput.Enabled = false;
                         btnEncode.Enabled = false;
                         btnCancel.Enabled = true;
                         btnExit.Enabled = false;
                         progressBar.Maximum = e.FilesCount;
                         progressBar.Value = 0;
-                        progressBar.Visible = true;
-                        Log.Visible = true;
+                        lastStatus.Text = "Encoding ...";
+                        currentStatus.Text = "Preparing ...";
                     };
                     Invoke(new MethodInvoker(Setup));
                     break;
@@ -217,7 +208,9 @@ namespace HBBatch
                     Action Update = () =>
                     {
                         progressBar.Value = e.Current;
-                        Log.Text = "Preparing ...";
+                        string input = Path.GetFileName(e.InputFile);
+                        lastStatus.Text = $"Encoding file {e.Current} of { e.FilesCount}";
+                        currentStatus.Text = $"\"{input}\"";
                     };
                     Invoke(new MethodInvoker(Update));
                     break;
@@ -232,7 +225,7 @@ namespace HBBatch
                         string output = Path.GetFileName(e.OutputFile);
                         Action Progress = () =>
                         {
-                            Log.Text = $"[{e.Current}/{e.FilesCount}] Encoding '{input}' -> '{output}' {match.Groups[1].Value}";
+                            currentStatus.Text = $"\"{input}\" {match.Groups[1].Value}";
                         };
                         Invoke(new MethodInvoker(Progress));
                     }
@@ -240,11 +233,15 @@ namespace HBBatch
                 case Status.Finalized:
                     Action Finalized = () =>
                     {
+                        groupHandbrake.Enabled = true;
+                        groupInput.Enabled = true;
+                        groupOutput.Enabled = true;
                         btnEncode.Enabled = true;
                         btnCancel.Enabled = false;
                         btnExit.Enabled = true;
-                        progressBar.Visible = false;
-                        Log.Visible = false;
+                        progressBar.Value = 0;
+                        lastStatus.Text = "Last run successful";
+                        currentStatus.Text = $"{e.FilesCount} files in {e.Misc}";
                     };
                     Invoke(new MethodInvoker(Finalized));
                     break;
@@ -253,11 +250,15 @@ namespace HBBatch
                 case Status.Aborted:
                     Action Aborted = () =>
                     {
+                        groupHandbrake.Enabled = true;
+                        groupInput.Enabled = true;
+                        groupOutput.Enabled = true;
                         btnEncode.Enabled = true;
                         btnCancel.Enabled = false;
                         btnExit.Enabled = true;
-                        progressBar.Visible = false;
-                        Log.Visible = false;
+                        progressBar.Value = 0;
+                        lastStatus.Text = "Last run aborted";
+                        currentStatus.Text = "-";
                     };
                     Invoke(new MethodInvoker(Aborted));
                     break;

@@ -13,7 +13,7 @@ namespace HBBatch
 {
     internal class EncodeWorker
     {
-        static MyProgressEventArgs args = new MyProgressEventArgs();
+        static readonly MyProgressEventArgs args = new MyProgressEventArgs();
 
         static public event EventHandler<MyProgressEventArgs> Progress;
 
@@ -28,6 +28,7 @@ namespace HBBatch
 
             Process Exe = null;
             EncodeParam d = (EncodeParam)data;
+
             try
             {
                 DateTime startedEncoding = DateTime.Now;
@@ -111,7 +112,23 @@ namespace HBBatch
                             Exe.BeginOutputReadLine();
                             while (!Exe.HasExited)
                             {
-                                Exe.WaitForExit(2000);
+                                try
+                                {
+                                    Exe.WaitForExit(2000);
+                                }
+                                catch (ThreadAbortException)
+                                {
+                                    args.Status = Status.Aborted;
+                                    OnProgress(args);
+                                    if (Exe != null)
+                                    {
+                                        Exe.CancelOutputRead();
+                                        Exe.Kill();
+                                        Exe.Close();
+                                        Exe = null;
+                                    }
+                                    return;
+                                }
                             }
                             DateTime ended = DateTime.Now;
                             TimeSpan span = ended.Subtract(started);
@@ -121,59 +138,34 @@ namespace HBBatch
                             {
                                 //FailedMessage();
                             }
-                            else
-                            {
-                                //Log($"{processingPrefix} Done in {duration}");
-                            }
                         }
                         Exe = null;
                     }
-                    catch (ThreadAbortException ex)
+                    catch (ThreadAbortException)
                     {
-                        args.Status = Status.Aborted;
-                        if (Exe != null)
-                        {
-                            //Exe.CancelOutputRead();
-                            Exe.Kill();
-                            Exe.Close();
-                            Exe = null;
-                        }
-                        OnProgress(args);
-                        throw ex;
+                       throw;
                     }
-                    catch (IOException)
-                    {
-                        //FailedMessage();
-                    }
-                    catch (UnauthorizedAccessException)
-                    {
-                        //FailedMessage();
-                    }
-                    catch (Exception)
+                    catch
                     {
                         //FailedMessage();
                     }
                     c++;
                     args.Current++;
                 }
-                TimeSpan ospan = DateTime.Now.Subtract(startedEncoding);
-                string oduration = $"{ospan.Hours}h{ospan.Minutes}m{ospan.Seconds}s";
-                //Log($"Processed {files.Count()} file(s) with {e} error(s). Processing time: {oduration}");
                 args.Status = Status.Finalized;
+                TimeSpan ospan = DateTime.Now.Subtract(startedEncoding);
+                args.Misc = $"{ospan.Hours:00}h{ospan.Minutes:00}m{ospan.Seconds:00}s";
                 OnProgress(args);
             }
             catch (ThreadAbortException)
             {
-                
+                args.Status = Status.Aborted;
+                OnProgress(args);
             }
-            catch (UnauthorizedAccessException)
+            catch
             {
                 SendErrorMsg("Accessing directory: unauthorized access.");
                 //ExitWithError("Accessing directory: unauthorized access.", 200);
-            }
-            catch (PathTooLongException)
-            {
-                SendErrorMsg("Accessing files: Path too long");
             }
         }
 

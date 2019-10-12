@@ -53,21 +53,24 @@
             this.groupSort = new System.Windows.Forms.GroupBox();
             this.renameOutputFiles = new System.Windows.Forms.CheckBox();
             this.label5 = new System.Windows.Forms.Label();
-            this.btnSimulate = new System.Windows.Forms.Button();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.groupHandbrake = new System.Windows.Forms.GroupBox();
+            this.groupInput = new System.Windows.Forms.GroupBox();
             this.sortInput = new System.Windows.Forms.CheckBox();
-            this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.groupOutput = new System.Windows.Forms.GroupBox();
             this.groupFilename = new System.Windows.Forms.GroupBox();
-            this.Log = new System.Windows.Forms.Label();
-            this.progressBar = new System.Windows.Forms.ProgressBar();
+            this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+            this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.progressBar = new System.Windows.Forms.ToolStripProgressBar();
+            this.lastStatus = new System.Windows.Forms.ToolStripStatusLabel();
+            this.currentStatus = new System.Windows.Forms.ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)(this.startAt)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.digits)).BeginInit();
             this.groupSort.SuspendLayout();
-            this.groupBox1.SuspendLayout();
-            this.groupBox2.SuspendLayout();
-            this.groupBox3.SuspendLayout();
+            this.groupHandbrake.SuspendLayout();
+            this.groupInput.SuspendLayout();
+            this.groupOutput.SuspendLayout();
             this.groupFilename.SuspendLayout();
+            this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // startAt
@@ -293,41 +296,32 @@
             this.label5.TabIndex = 34;
             this.label5.Text = "Suffix-Counter:";
             // 
-            // btnSimulate
+            // groupHandbrake
             // 
-            this.btnSimulate.Location = new System.Drawing.Point(224, 466);
-            this.btnSimulate.Name = "btnSimulate";
-            this.btnSimulate.Size = new System.Drawing.Size(100, 23);
-            this.btnSimulate.TabIndex = 17;
-            this.btnSimulate.Text = "Simulate";
-            this.btnSimulate.UseVisualStyleBackColor = true;
+            this.groupHandbrake.Controls.Add(this.pathHandbrakeCLI);
+            this.groupHandbrake.Controls.Add(this.btnOpenFileHandbrakeCLI);
+            this.groupHandbrake.Controls.Add(this.label1);
+            this.groupHandbrake.Location = new System.Drawing.Point(13, 13);
+            this.groupHandbrake.Name = "groupHandbrake";
+            this.groupHandbrake.Size = new System.Drawing.Size(430, 78);
+            this.groupHandbrake.TabIndex = 35;
+            this.groupHandbrake.TabStop = false;
+            this.groupHandbrake.Text = "Handbrake CLI";
             // 
-            // groupBox1
+            // groupInput
             // 
-            this.groupBox1.Controls.Add(this.pathHandbrakeCLI);
-            this.groupBox1.Controls.Add(this.btnOpenFileHandbrakeCLI);
-            this.groupBox1.Controls.Add(this.label1);
-            this.groupBox1.Location = new System.Drawing.Point(13, 13);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(430, 78);
-            this.groupBox1.TabIndex = 35;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Handbrake CLI";
-            // 
-            // groupBox2
-            // 
-            this.groupBox2.Controls.Add(this.sortInput);
-            this.groupBox2.Controls.Add(this.pathInputFolder);
-            this.groupBox2.Controls.Add(this.searchSubfolders);
-            this.groupBox2.Controls.Add(this.btnOpenInputFolder);
-            this.groupBox2.Controls.Add(this.label2);
-            this.groupBox2.Controls.Add(this.groupSort);
-            this.groupBox2.Location = new System.Drawing.Point(13, 98);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(430, 176);
-            this.groupBox2.TabIndex = 36;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Input settings";
+            this.groupInput.Controls.Add(this.sortInput);
+            this.groupInput.Controls.Add(this.pathInputFolder);
+            this.groupInput.Controls.Add(this.searchSubfolders);
+            this.groupInput.Controls.Add(this.btnOpenInputFolder);
+            this.groupInput.Controls.Add(this.label2);
+            this.groupInput.Controls.Add(this.groupSort);
+            this.groupInput.Location = new System.Drawing.Point(13, 98);
+            this.groupInput.Name = "groupInput";
+            this.groupInput.Size = new System.Drawing.Size(430, 176);
+            this.groupInput.TabIndex = 36;
+            this.groupInput.TabStop = false;
+            this.groupInput.Text = "Input settings";
             // 
             // sortInput
             // 
@@ -339,19 +333,19 @@
             this.sortInput.Text = "Sort input";
             this.sortInput.UseVisualStyleBackColor = true;
             // 
-            // groupBox3
+            // groupOutput
             // 
-            this.groupBox3.Controls.Add(this.groupFilename);
-            this.groupBox3.Controls.Add(this.pathOutputFolder);
-            this.groupBox3.Controls.Add(this.btnOpenOutputFolder);
-            this.groupBox3.Controls.Add(this.renameOutputFiles);
-            this.groupBox3.Controls.Add(this.label3);
-            this.groupBox3.Location = new System.Drawing.Point(13, 280);
-            this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(430, 180);
-            this.groupBox3.TabIndex = 37;
-            this.groupBox3.TabStop = false;
-            this.groupBox3.Text = "Output settings";
+            this.groupOutput.Controls.Add(this.groupFilename);
+            this.groupOutput.Controls.Add(this.pathOutputFolder);
+            this.groupOutput.Controls.Add(this.btnOpenOutputFolder);
+            this.groupOutput.Controls.Add(this.renameOutputFiles);
+            this.groupOutput.Controls.Add(this.label3);
+            this.groupOutput.Location = new System.Drawing.Point(13, 280);
+            this.groupOutput.Name = "groupOutput";
+            this.groupOutput.Size = new System.Drawing.Size(430, 180);
+            this.groupOutput.TabIndex = 37;
+            this.groupOutput.TabStop = false;
+            this.groupOutput.Text = "Output settings";
             // 
             // groupFilename
             // 
@@ -369,34 +363,63 @@
             this.groupFilename.TabStop = false;
             this.groupFilename.Text = "Filename settings";
             // 
-            // Log
+            // statusStrip1
             // 
-            this.Log.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.Log.Location = new System.Drawing.Point(13, 525);
-            this.Log.Name = "Log";
-            this.Log.Size = new System.Drawing.Size(430, 20);
-            this.Log.TabIndex = 38;
-            this.Log.Text = "Text";
+            this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripStatusLabel1,
+            this.lastStatus,
+            this.currentStatus,
+            this.progressBar});
+            this.statusStrip1.Location = new System.Drawing.Point(0, 504);
+            this.statusStrip1.Name = "statusStrip1";
+            this.statusStrip1.Size = new System.Drawing.Size(460, 24);
+            this.statusStrip1.SizingGrip = false;
+            this.statusStrip1.TabIndex = 40;
+            this.statusStrip1.Text = "statusStrip1";
+            // 
+            // toolStripStatusLabel1
+            // 
+            this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(0, 19);
             // 
             // progressBar
             // 
-            this.progressBar.Location = new System.Drawing.Point(13, 496);
+            this.progressBar.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
             this.progressBar.Name = "progressBar";
-            this.progressBar.Size = new System.Drawing.Size(430, 23);
-            this.progressBar.TabIndex = 39;
+            this.progressBar.Overflow = System.Windows.Forms.ToolStripItemOverflow.Never;
+            this.progressBar.Size = new System.Drawing.Size(100, 18);
+            // 
+            // lastStatus
+            // 
+            this.lastStatus.AutoSize = false;
+            this.lastStatus.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
+            this.lastStatus.Name = "lastStatus";
+            this.lastStatus.Overflow = System.Windows.Forms.ToolStripItemOverflow.Never;
+            this.lastStatus.Size = new System.Drawing.Size(115, 19);
+            this.lastStatus.Text = "Last run: successful";
+            this.lastStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // currentStatus
+            // 
+            this.currentStatus.AutoSize = false;
+            this.currentStatus.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
+            this.currentStatus.Name = "currentStatus";
+            this.currentStatus.Overflow = System.Windows.Forms.ToolStripItemOverflow.Never;
+            this.currentStatus.Size = new System.Drawing.Size(230, 19);
+            this.currentStatus.Text = "Ready";
+            this.currentStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(460, 546);
-            this.Controls.Add(this.progressBar);
-            this.Controls.Add(this.Log);
-            this.Controls.Add(this.groupBox3);
-            this.Controls.Add(this.groupBox2);
-            this.Controls.Add(this.groupBox1);
+            this.ClientSize = new System.Drawing.Size(460, 528);
+            this.ControlBox = false;
+            this.Controls.Add(this.statusStrip1);
+            this.Controls.Add(this.groupOutput);
+            this.Controls.Add(this.groupInput);
+            this.Controls.Add(this.groupHandbrake);
             this.Controls.Add(this.btnExit);
-            this.Controls.Add(this.btnSimulate);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnEncode);
             this.Name = "MainWindow";
@@ -405,15 +428,18 @@
             ((System.ComponentModel.ISupportInitialize)(this.digits)).EndInit();
             this.groupSort.ResumeLayout(false);
             this.groupSort.PerformLayout();
-            this.groupBox1.ResumeLayout(false);
-            this.groupBox1.PerformLayout();
-            this.groupBox2.ResumeLayout(false);
-            this.groupBox2.PerformLayout();
-            this.groupBox3.ResumeLayout(false);
-            this.groupBox3.PerformLayout();
+            this.groupHandbrake.ResumeLayout(false);
+            this.groupHandbrake.PerformLayout();
+            this.groupInput.ResumeLayout(false);
+            this.groupInput.PerformLayout();
+            this.groupOutput.ResumeLayout(false);
+            this.groupOutput.PerformLayout();
             this.groupFilename.ResumeLayout(false);
             this.groupFilename.PerformLayout();
+            this.statusStrip1.ResumeLayout(false);
+            this.statusStrip1.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -444,14 +470,16 @@
         private System.Windows.Forms.GroupBox groupSort;
         private System.Windows.Forms.CheckBox renameOutputFiles;
         private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.Button btnSimulate;
-        private System.Windows.Forms.GroupBox groupBox1;
-        private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.GroupBox groupHandbrake;
+        private System.Windows.Forms.GroupBox groupInput;
+        private System.Windows.Forms.GroupBox groupOutput;
         private System.Windows.Forms.CheckBox sortInput;
         private System.Windows.Forms.GroupBox groupFilename;
-        private System.Windows.Forms.Label Log;
-        private System.Windows.Forms.ProgressBar progressBar;
+        private System.Windows.Forms.StatusStrip statusStrip1;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
+        private System.Windows.Forms.ToolStripStatusLabel lastStatus;
+        private System.Windows.Forms.ToolStripProgressBar progressBar;
+        private System.Windows.Forms.ToolStripStatusLabel currentStatus;
     }
 }
 
