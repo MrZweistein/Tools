@@ -6,8 +6,11 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace HBBatch
 {
@@ -15,6 +18,9 @@ namespace HBBatch
     {
         private IniFile iniFile;
         private bool[] canEncode = { true, true, true };
+        private Thread encodeThread = null;
+        private EncodeParam encodeParam;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -58,6 +64,13 @@ namespace HBBatch
             ValidateSetting(pathHandbrakeCLI);
             ValidateSetting(pathInputFolder);
             ValidateSetting(pathOutputFolder);
+
+            btnEncode.Click += (s, e) => StartEncode();
+            btnCancel.Click += (s, e) => encodeThread?.Abort();
+            progressBar.Visible = false;
+            Log.Visible = false;
+            EncodeWorker.Progress += EncodeWorker_Progress;
+
         }
 
         private bool ValidateSetting(object sender)
@@ -145,6 +158,113 @@ namespace HBBatch
         {
             pathHandbrakeCLI.Text = Path.Combine(SelectFolder("Select HandbrakeCLI Folder", false, Path.GetDirectoryName(pathHandbrakeCLI.Text)), "HandBrakeCLI.exe");
             ValidateSetting(pathHandbrakeCLI);
+        }
+
+        //private void CancelEncode()
+        //{
+        //    if (handbrakeProcess != null)
+        //    {
+        //        if (!handbrakeProcess.HasExited)
+        //        {
+        //            handbrakeProcess.CancelOutputRead();
+        //            handbrakeProcess.Kill();
+        //            handbrakeProcess.Close();
+        //            handbrakeProcess = null;
+        //        }
+        //    }
+        //}
+
+
+        private void StartEncode()
+        {
+            encodeThread = new Thread(EncodeWorker.EncodeThread);
+            encodeParam = new EncodeParam()
+            {
+                HandbrakeCLIExe = pathHandbrakeCLI.Text,
+                InputFolder = pathInputFolder.Text,
+                Recursive = searchSubfolders.Checked,
+                Sort = sortInput.Checked,
+                OrderByDate = sortByDate.Checked,
+                OrderDescending = sortDescending.Checked,
+                FilePattern = "*.mkv",
+                OutputFolder = pathOutputFolder.Text,
+                RenameFiles = renameOutputFiles.Checked,
+                FilePrefix = prefix.Text,
+                StartAt = (int)startAt.Value,
+                Digits = (int)digits.Value
+            };
+            encodeThread.Start(encodeParam);
+        }
+
+        private void EncodeWorker_Progress(object sender, MyProgressEventArgs e)
+        {
+            switch (e.Status)
+            {
+                case Status.Setup:
+                    Action Setup = () =>
+                    {
+                        btnEncode.Enabled = false;
+                        btnCancel.Enabled = true;
+                        btnExit.Enabled = false;
+                        progressBar.Maximum = e.FilesCount;
+                        progressBar.Value = 0;
+                        progressBar.Visible = true;
+                        Log.Visible = true;
+                    };
+                    Invoke(new MethodInvoker(Setup));
+                    break;
+                case Status.Update:
+                    Action Update = () =>
+                    {
+                        progressBar.Value = e.Current;
+                        Log.Text = "Preparing ...";
+                    };
+                    Invoke(new MethodInvoker(Update));
+                    break;
+                case Status.Progress:
+
+                    string filter = @".*(\b\d?\d[.]\d\d\x20\x25)";
+                    Regex regExp = new Regex(filter);
+                    Match match = regExp.Match(e.ExeOutput);
+                    if (match.Success)
+                    {
+                        string input = Path.GetFileName(e.InputFile);
+                        string output = Path.GetFileName(e.OutputFile);
+                        Action Progress = () =>
+                        {
+                            Log.Text = $"[{e.Current}/{e.FilesCount}] Encoding '{input}' -> '{output}' {match.Groups[1].Value}";
+                        };
+                        Invoke(new MethodInvoker(Progress));
+                    }
+                    break;
+                case Status.Finalized:
+                    Action Finalized = () =>
+                    {
+                        btnEncode.Enabled = true;
+                        btnCancel.Enabled = false;
+                        btnExit.Enabled = true;
+                        progressBar.Visible = false;
+                        Log.Visible = false;
+                    };
+                    Invoke(new MethodInvoker(Finalized));
+                    break;
+                case Status.Failed:
+                    break;
+                case Status.Aborted:
+                    Action Aborted = () =>
+                    {
+                        btnEncode.Enabled = true;
+                        btnCancel.Enabled = false;
+                        btnExit.Enabled = true;
+                        progressBar.Visible = false;
+                        Log.Visible = false;
+                    };
+                    Invoke(new MethodInvoker(Aborted));
+                    break;
+                default:
+                    break;
+            }
+
         }
     }
 }

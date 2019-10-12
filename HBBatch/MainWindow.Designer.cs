@@ -56,9 +56,11 @@
             this.btnSimulate = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.sortInput = new System.Windows.Forms.CheckBox();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.groupFilename = new System.Windows.Forms.GroupBox();
+            this.Log = new System.Windows.Forms.Label();
+            this.progressBar = new System.Windows.Forms.ProgressBar();
             ((System.ComponentModel.ISupportInitialize)(this.startAt)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.digits)).BeginInit();
             this.groupSort.SuspendLayout();
@@ -327,6 +329,16 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Input settings";
             // 
+            // sortInput
+            // 
+            this.sortInput.AutoSize = true;
+            this.sortInput.Location = new System.Drawing.Point(13, 86);
+            this.sortInput.Name = "sortInput";
+            this.sortInput.Size = new System.Drawing.Size(71, 17);
+            this.sortInput.TabIndex = 31;
+            this.sortInput.Text = "Sort input";
+            this.sortInput.UseVisualStyleBackColor = true;
+            // 
             // groupBox3
             // 
             this.groupBox3.Controls.Add(this.groupFilename);
@@ -340,16 +352,6 @@
             this.groupBox3.TabIndex = 37;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Output settings";
-            // 
-            // sortInput
-            // 
-            this.sortInput.AutoSize = true;
-            this.sortInput.Location = new System.Drawing.Point(13, 86);
-            this.sortInput.Name = "sortInput";
-            this.sortInput.Size = new System.Drawing.Size(71, 17);
-            this.sortInput.TabIndex = 31;
-            this.sortInput.Text = "Sort input";
-            this.sortInput.UseVisualStyleBackColor = true;
             // 
             // groupFilename
             // 
@@ -367,11 +369,29 @@
             this.groupFilename.TabStop = false;
             this.groupFilename.Text = "Filename settings";
             // 
+            // Log
+            // 
+            this.Log.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Log.Location = new System.Drawing.Point(13, 525);
+            this.Log.Name = "Log";
+            this.Log.Size = new System.Drawing.Size(430, 20);
+            this.Log.TabIndex = 38;
+            this.Log.Text = "Text";
+            // 
+            // progressBar
+            // 
+            this.progressBar.Location = new System.Drawing.Point(13, 496);
+            this.progressBar.Name = "progressBar";
+            this.progressBar.Size = new System.Drawing.Size(430, 23);
+            this.progressBar.TabIndex = 39;
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(460, 546);
+            this.Controls.Add(this.progressBar);
+            this.Controls.Add(this.Log);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
@@ -430,6 +450,8 @@
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.CheckBox sortInput;
         private System.Windows.Forms.GroupBox groupFilename;
+        private System.Windows.Forms.Label Log;
+        private System.Windows.Forms.ProgressBar progressBar;
     }
 }
 

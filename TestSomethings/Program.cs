@@ -4,10 +4,17 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace TestSomethings
 {
+    struct Data
+    {
+        public string a;
+        public int b;
+    }
+
     class Program
     {
 
@@ -17,10 +24,34 @@ namespace TestSomethings
 
         static void Main(string[] args)
         {
-            Console.CancelKeyPress += Console_CancelKeyPress;
-            Investigating();
+            //Console.CancelKeyPress += Console_CancelKeyPress;
+            //Investigating();
             //Processing();
+            Data data = new Data() { a = "haha", b = 2 };
+            Thread thread = new Thread(Doing);
+            thread.Start(data);
+            Thread.Sleep(2000);
+            thread.Abort();
+            Console.ReadKey();
+        }
 
+        private static void Doing(object d)
+        {
+            int c = 0;
+            Data e = (Data)d;
+            try
+            {
+                while (true)
+                {
+                    Console.Write($"\r{e.a} -> {e.b} -> {c++}");
+                    Thread.Sleep(100);
+                }
+            }
+            catch (ThreadAbortException)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Thread aborted");
+            }
         }
 
         private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
