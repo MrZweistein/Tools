@@ -16,8 +16,8 @@ namespace HBBatch
 {
     public partial class MainWindow : Form
     {
-        private IniFile iniFile;
-        private bool[] canEncode = { true, true, true };
+        private readonly IniFile iniFile;
+        private readonly bool[] canEncode = { true, true, true };
         private Thread encodeThread = null;
         private EncodeParam encodeParam;
 
@@ -38,7 +38,7 @@ namespace HBBatch
             digits.Maximum = 5;
             lastStatus.Text = "-";
             currentStatus.Text = "-";
-           
+
             // Load user defined settings from Ini File
             pathHandbrakeCLI.Text = iniFile.GetHandbrakeLocation();
             pathInputFolder.Text = iniFile.GetInputFolder();
@@ -253,7 +253,7 @@ namespace HBBatch
                         btnEncode.Enabled = false;
                         btnCancel.Enabled = true;
                         btnExit.Enabled = false;
-                        progressBar.Maximum = e.FilesCount;
+                        progressBar.Maximum = e.FilesCount+1;
                         progressBar.Value = 0;
                         lastStatus.Text = " Encoding ...";
                         currentStatus.Text = "Preparing ...";
