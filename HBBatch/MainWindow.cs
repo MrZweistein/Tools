@@ -29,9 +29,9 @@ namespace HBBatch
             iniFile = new IniFile();
 
             // UI general start settings
+            if (!GetWindowLocation()) StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Text = "HBBatch 1.0 © 2019 Roger Spiess";
-            StartPosition = FormStartPosition.CenterScreen;
             btnCancel.Enabled = false;
             startAt.Minimum = 0;
             digits.Minimum = 1;
@@ -66,7 +66,7 @@ namespace HBBatch
             btnOpenFileHandbrakeCLI.Click += (s, e) => LocateHandbrakeCLIExecutable();
             btnOpenInputFolder.Click += (s, e) => SelectInputFolder();
             btnOpenOutputFolder.Click += (s, e) => SelectOutputFolder();
-            btnExit.Click += (s, e) => ExitApplication();
+            btnExit.Click += (s, e) => Close();
             btnEncode.Click += (s, e) => StartEncode();
             btnCancel.Click += (s, e) => encodeThread?.Abort();
             FormClosing += (s, e) => SaveSettings();
@@ -75,14 +75,18 @@ namespace HBBatch
             EncodeWorker.Progress += EncodeWorker_Progress;
         }
 
-        /// <summary>
-        /// Save user settings and exit application
-        /// </summary>
-        private void ExitApplication()
+        private bool GetWindowLocation()
         {
-            //SaveSettings(); 
-            //Application.Exit();
-            Close();
+            string pos = iniFile.GetWinPos();
+            if (string.IsNullOrWhiteSpace(pos)) return false;
+            string[] coords = pos.Split(',');
+            if (coords.Length != 2) return false;
+            if (!int.TryParse(coords[0], out int x)) return false;
+            if (!int.TryParse(coords[1], out int y)) return false;
+            StartPosition = FormStartPosition.Manual;
+            Point loc = new Point(x, y);
+            Location = loc;
+            return true;
         }
 
         /// <summary>
@@ -120,6 +124,7 @@ namespace HBBatch
         /// </summary>
         private void SaveSettings()
         {
+            iniFile.SetWinPos($"{Location.X},{Location.Y}");
             iniFile.SetHandbrakeLocation(pathHandbrakeCLI.Text);
             iniFile.SetInputFolder(pathInputFolder.Text);
             iniFile.SetSubfoldersFlag(searchSubfolders.Checked);

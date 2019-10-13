@@ -52,6 +52,9 @@ namespace HBBatch
         {
             SectionData section;
             Data = Parser.Parse("");
+            Data.Sections.AddSection("Application");
+            section = Data.Sections.GetSectionData("Application");
+            section.Keys.AddKey("position", "");
             Data.Sections.AddSection("Handbrake");
             section = Data.Sections.GetSectionData("Handbrake");
             section.Keys.AddKey("location", @"c:\Program Files\Handbrake\HandbrakeCLI.exe");
@@ -105,6 +108,7 @@ namespace HBBatch
             }
         }
 
+        public string GetWinPos() => Data["Application"]["position"];
         public string GetHandbrakeLocation() => Data["Handbrake"]["location"];
         public string GetInputFolder() => Data["Input"]["inputfolder"];
         public bool GetSubfoldersFlag() => GetBool("Input", "subfolders");
@@ -116,6 +120,7 @@ namespace HBBatch
         public string GetPrefix() => Data["Output"]["prefix"];
         public int GetStartAt() => GetNumber("Output", "startat");
         public int GetDigits() => GetNumber("Output", "digits");
+        public void SetWinPos(string position) => Data["Application"]["position"] = position;
         public void SetHandbrakeLocation(string location) => Data["Handbrake"]["location"] = location;
         public void SetInputFolder(string folder) => Data["Input"]["inputfolder"] = folder;
         public void SetSubfoldersFlag(bool flag) => SetBool("Input", "subfolders", flag);
