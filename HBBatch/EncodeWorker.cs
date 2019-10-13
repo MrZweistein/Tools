@@ -37,8 +37,7 @@ namespace HBBatch
                 int c = d.StartAt;
                 args.FilesCount = files.Length;
                 args.Current = 1;
-                args.Status = Status.Setup;
-                OnProgress(args);
+                SendStatus(Status.Setup);
 
                 // Sort files if asked for (uses full file path)
                 if (d.Sort)
@@ -92,8 +91,7 @@ namespace HBBatch
 
                         args.InputFile = filepath;
                         args.OutputFile = outputfile;
-                        args.Status = Status.Update;
-                        OnProgress(args);
+                        SendStatus(Status.Update);
 
                         DateTime started = DateTime.Now;
 
@@ -118,8 +116,7 @@ namespace HBBatch
                                 }
                                 catch (ThreadAbortException)
                                 {
-                                    args.Status = Status.Aborted;
-                                    OnProgress(args);
+                                    SendStatus(Status.Aborted);
                                     if (Exe != null)
                                     {
                                         Exe.CancelOutputRead();
@@ -136,7 +133,7 @@ namespace HBBatch
 
                             if (Exe.ExitCode != 0)
                             {
-                                //FailedMessage();
+                                SendStatus(Status.Failed);
                             }
                         }
                         Exe = null;
@@ -147,32 +144,28 @@ namespace HBBatch
                     }
                     catch
                     {
-                        //FailedMessage();
+                        SendStatus(Status.Failed);
                     }
                     c++;
                     args.Current++;
                 }
-                args.Status = Status.Finalized;
                 TimeSpan ospan = DateTime.Now.Subtract(startedEncoding);
                 args.Misc = $"{ospan.Hours:00}h{ospan.Minutes:00}m{ospan.Seconds:00}s";
-                OnProgress(args);
+                SendStatus(Status.Finalized);
             }
             catch (ThreadAbortException)
             {
-                args.Status = Status.Aborted;
-                OnProgress(args);
+                SendStatus(Status.Aborted);
             }
             catch
             {
-                SendErrorMsg("Accessing directory: unauthorized access.");
-                //ExitWithError("Accessing directory: unauthorized access.", 200);
+                SendStatus(Status.CriticalError);
             }
         }
 
-        static private void SendErrorMsg(string error)
+        static private void SendStatus(Status status)
         {
-            args.Status = Status.Failed;
-            args.Misc = error;
+            args.Status = status;
             OnProgress(args);
         }
 
@@ -180,9 +173,8 @@ namespace HBBatch
         {
             if (!string.IsNullOrEmpty(e.Data))
             {
-                args.Status = Status.Progress;
                 args.ExeOutput = e.Data;
-                OnProgress(args);
+                SendStatus(Status.Progress);
             }
         }
 

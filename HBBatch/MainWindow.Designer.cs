@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             this.startAt = new System.Windows.Forms.NumericUpDown();
             this.digits = new System.Windows.Forms.NumericUpDown();
             this.searchSubfolders = new System.Windows.Forms.CheckBox();
@@ -367,9 +368,9 @@
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1,
+            this.progressBar,
             this.lastStatus,
-            this.currentStatus,
-            this.progressBar});
+            this.currentStatus});
             this.statusStrip1.Location = new System.Drawing.Point(0, 504);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(460, 24);
@@ -392,7 +393,7 @@
             // lastStatus
             // 
             this.lastStatus.AutoSize = false;
-            this.lastStatus.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
+            this.lastStatus.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
             this.lastStatus.Name = "lastStatus";
             this.lastStatus.Overflow = System.Windows.Forms.ToolStripItemOverflow.Never;
             this.lastStatus.Size = new System.Drawing.Size(115, 19);
@@ -402,7 +403,7 @@
             // currentStatus
             // 
             this.currentStatus.AutoSize = false;
-            this.currentStatus.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
+            this.currentStatus.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
             this.currentStatus.Name = "currentStatus";
             this.currentStatus.Overflow = System.Windows.Forms.ToolStripItemOverflow.Never;
             this.currentStatus.Size = new System.Drawing.Size(230, 19);
@@ -414,7 +415,6 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(460, 528);
-            this.ControlBox = false;
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.groupOutput);
             this.Controls.Add(this.groupInput);
@@ -422,6 +422,8 @@
             this.Controls.Add(this.btnExit);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnEncode);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainWindow";
             this.Text = "HBBatch 1.0";
             ((System.ComponentModel.ISupportInitialize)(this.startAt)).EndInit();

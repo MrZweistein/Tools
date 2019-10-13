@@ -25,6 +25,7 @@ namespace HBBatch
         Progress,
         Finalized,
         Failed,
-        Aborted
+        Aborted,
+        CriticalError
     }
 }
