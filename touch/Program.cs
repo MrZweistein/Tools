@@ -1,6 +1,6 @@
 ﻿/************************************************************************************************************/
 /*                                                                                                          */
-/*  Touch Clone Version 1.2                                                                                 */
+/*  Touch Clone Version 1.3                                                                                 */
 /*  Entwickelt durch Roger Spiess, Hamburg,  2018                                                           */
 /*  Alle Rechte vorbehalten                                                                                 */
 /*                                                                                                          */
@@ -8,6 +8,7 @@
 /*  04-11-2018 Version 1.0                                                                                  */
 /*  07-11-2018 Version 1.1 -R option (file reference) Überarbeitung Optionen + Bugfixes                     */
 /*  08-11-2018 Version 1.2 Erlauben Zeitangabe mit hh:mm und ss optional                                    */
+/*  20-06-2020 Version 1.3 multiple file mentions                                                           */
 /*                                                                                                          */
 /************************************************************************************************************/
 using System;
@@ -16,6 +17,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using static System.Console;
+using System.Reflection;
 
 namespace touch
 {
@@ -31,6 +33,7 @@ namespace touch
         static bool verboseOption = false;
         static bool fileRefOption = false;
         static bool touchDirOption = false;
+        static bool fileListOption = false;
 
         static string workingDirectory = default(string);
         static string filePattern = default(string);
@@ -38,6 +41,7 @@ namespace touch
         static string timeString = default(string);
         static string fileReference = default(string);
         static DateTime datetime = DateTime.Now;
+        static List<string> fileList = new List<string>();
 
         /// <summary>
         /// Application entry point
@@ -58,9 +62,21 @@ namespace touch
         {
             try
             {
+                List<string> m_files = new List<string>();
                 var culture = new System.Globalization.CultureInfo("de-DE");
                 string[] formats = { "dd-MM-yyyy HH:mm:ss" };
-                string[] files = Directory.GetFiles(workingDirectory, filePattern, recursiveOption ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                if (fileListOption)
+                {
+                    foreach (string pattern in fileList)
+                    {
+                        m_files.AddRange(Directory.GetFiles(workingDirectory, pattern, recursiveOption ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
+                    }
+                }
+                else
+                {
+                    m_files = Directory.GetFiles(workingDirectory, filePattern, recursiveOption ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly).ToList<string>();
+                }
+                string[] files = m_files.ToArray();
                 if (touchDirOption)
                 {
                     string[] dirs = Directory.GetDirectories(workingDirectory, "*", SearchOption.AllDirectories);
@@ -137,7 +153,7 @@ namespace touch
         /// <param name="args">command line parameters</param>
         static void Parse(string[] args)
         {
-            Log("mytouch.exe Version 1.2 (C) 2018 Roger Spiess");
+            Log("mytouch.exe Version 1.3 (C) 2018 Roger Spiess");
             if (args.Count() == 0)
             {
                 ExitWithHelp();
@@ -148,11 +164,12 @@ namespace touch
                 _args.AddRange(elem.Split('"', ' '));
             }
             _args = _args.Where((e) => e != "").ToList();
-            string options = "-w,-r,-rD,-f,-a,-d,-date,-t,-time,-now,-F,-v,-?";
+            string options = "-w,-r,-rD,-f,-a,-d,-date,-t,-time,-now,-F,-v,-?,-fl";
             var culture = new System.Globalization.CultureInfo("de-DE");
             for (int i = 0; i < _args.Count(); i++)
             {
                 bool Inc() => ++i < _args.Count();
+                void Dec() => i--;
                 string option = _args[i];
                 if (option == "-w")
                 {
@@ -217,6 +234,28 @@ namespace touch
                         ExitWithError("-R option: Missing filename", 108);
                     }
                 }
+                else if (option == "-fl")
+                {
+                    if (fileListOption)
+                    {
+                        ExitWithError("-f option: Option already exists", 109);
+                    }
+                    while (Inc())
+                    {
+                        string nextItem = _args[i];
+                        if (MemberOf(nextItem, options.Split(',')))
+                        {
+                            if (fileList.Count == 0)
+                            {
+                                ExitWithError("-f option: Missing filename or filename pattern", 110);
+                            }
+                            Dec();
+                            break;
+                        }
+                        fileListOption = true;
+                        fileList.Add(nextItem);
+                    }
+                }
                 else if (option == "-f")
                 {
                     if (filepatternOption)
@@ -246,7 +285,7 @@ namespace touch
                     }
                     allOption = true;
                 }
-                else if (option == "-date" || option == "-d")
+                else if (option == "-date" | option == "-d")
                 {
                     if (dateOption)
                     {
@@ -366,7 +405,7 @@ namespace touch
                 dateString = datetime.ToString("dd-MM-yyyy");
                 timeString = datetime.ToString("HH:mm:ss");
             }
-            allOption = !(filepatternOption);
+            allOption = !(filepatternOption | fileListOption);
             if (allOption)
             {
                 filePattern = "*.*";
@@ -406,16 +445,17 @@ namespace touch
         static void ExitWithHelp()
         {
             WriteLine("Options:");
-            WriteLine("   -w <directory>     => work with files in <directory>");
-            WriteLine("   -r[D]              => include subdirectories recursively. Combined with D subdirectories will be touched too");
-            WriteLine("   -f <filepattern>   => touch files with <filepattern>. Use '*' and '?' for pattern");
-            WriteLine("   -F <file>          => use <file> as date/time reference. overwrites -now -date -time");
-            WriteLine("   -a                 => Standard option. touch all files in the directory. Gets ignored if -f option is used");
-            WriteLine("   -d[ate] dd-mm-yyyy => date to use");
-            WriteLine("   -t[ime] hh:mm[:ss] => time to use. 24h format");
-            WriteLine("   -now               => Standard option. touch with current timestamp. Gets ignored if -date or -time is used");
-            WriteLine("   -v                 => verbose mode");
-            WriteLine("   -?                 => shows this text and surpresses all other options");
+            WriteLine("   -w <directory>         => work with files in <directory>");
+            WriteLine("   -r[D]                  => include subdirectories recursively. Combined with D subdirectories will be touched too");
+            WriteLine("   -f <filepattern>       => touch files with <filepattern>. Use '*' and '?' for pattern");
+            WriteLine("   -fl <file> <file> ...  => touch files with <file>. Use '*' and '?' for pattern");
+            WriteLine("   -F <file>              => use <file> as date/time reference. overwrites -now -date -time");
+            WriteLine("   -a                     => Standard option. touch all files in the directory. Gets ignored if -f option is used");
+            WriteLine("   -d[ate] dd-mm-yyyy     => date to use");
+            WriteLine("   -t[ime] hh:mm[:ss]     => time to use. 24h format");
+            WriteLine("   -now                   => Standard option. touch with current timestamp. Gets ignored if -date or -time is used");
+            WriteLine("   -v                     => verbose mode");
+            WriteLine("   -?                     => shows this text and surpresses all other options");
             WriteLine();
             WriteLine("Examples:");
             WriteLine("   touch -w .\\directory -a -d 01-01-2018 -t 10:00:00");
