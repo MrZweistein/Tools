@@ -153,7 +153,7 @@ namespace touch
         /// <param name="args">command line parameters</param>
         static void Parse(string[] args)
         {
-            Log("mytouch.exe Version 1.3 (C) 2018 Roger Spiess");
+            Log("mytouch.exe Version 1.3 (C) 2018-2020 rspSoft");
             if (args.Count() == 0)
             {
                 ExitWithHelp();
