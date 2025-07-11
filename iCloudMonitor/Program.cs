@@ -1,60 +1,52 @@
-using System;
+﻿using System;
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Timers;
 using System.Windows.Forms;
+using System.Windows.Automation;
 
 namespace iCloudMonitor
 {
-    using System;
-    using System.Diagnostics;
-    using System.Reflection;
-    using System.Runtime.InteropServices;
-    using System.Timers;
-    using System.Windows.Forms;
-    using Timer = System.Timers.Timer;
-
     class Program : Form
     {
         [DllImport("user32.dll")]
         private static extern IntPtr FindWindow(string? lpClassName, string lpWindowName);
-        [DllImport("user32.dll")]
-        private static extern bool PostMessage(IntPtr hWnd, uint Msg, int wParam, int lParam);
-        [DllImport("user32.dll", SetLastError = true)]
-        static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string? lpszClass, string lpszWindow);
+
         [DllImport("user32.dll")]
         private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
-        private const uint WM_CLOSE = 0x0010;
         private const int SW_HIDE = 0;
-        private const int SW_SHOW = 5;
 
         private static string targetWindowTitle = "iCloud"; // CHANGE TO TARGET WINDOW TITLE
+        private static string pauseText = "Pause";
+        private static string resumeText = "Resume";
+        private static string enableAutostartText = "Enable Autostart";
+        private static string disableAutostartText = "Disable Autostart";
 
-        private static Timer? checkTimer;
         private static bool isMonitoring = true;
         private NotifyIcon trayIcon;
         private ContextMenuStrip trayMenu;
         private ToolStripMenuItem toggleItem;
+        private ToolStripMenuItem autoStartItem;
+        private AutomationEventHandler windowOpenedHandler;
 
         [STAThread]
         static void Main()
         {
             Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Program());
         }
 
         public Program()
         {
-            // Timer to check for window every 5 seconds
-            checkTimer = new Timer(60000);
-            checkTimer.Elapsed += CheckForWindow;
-            checkTimer.Start();
-
-            toggleItem = new ToolStripMenuItem("Pause", null, ToggleMonitoring);
+            toggleItem = new ToolStripMenuItem(pauseText, null, ToggleMonitoring);
+            autoStartItem = new ToolStripMenuItem(enableAutostartText, null, ToggleAutostart);
 
             trayMenu = new ContextMenuStrip();
             trayMenu.Items.Add(toggleItem);
+            trayMenu.Items.Add(autoStartItem);
             trayMenu.Items.Add("Exit", null, (s, e) => Application.Exit());
 
             trayIcon = new NotifyIcon
@@ -71,7 +63,66 @@ namespace iCloudMonitor
             this.ShowInTaskbar = false;
             this.Load += (s, e) => this.Hide();
 
-            CheckForWindow(null, null);
+            // Hook window opened events
+            windowOpenedHandler = new AutomationEventHandler(OnWindowOpened);
+            Automation.AddAutomationEventHandler(
+                WindowPattern.WindowOpenedEvent,
+                AutomationElement.RootElement,
+                TreeScope.Subtree,
+                windowOpenedHandler
+            );
+
+            SetAutostartMenuItem();
+            InitialCheck();
+        }
+
+        private void ToggleAutostart(object? sender, EventArgs e)
+        {
+            bool isOn = StartupManager.IsAutoStartEnabled();
+            if (isOn)
+            {
+                StartupManager.DisableAutoStart();
+            }
+            else
+            {
+                StartupManager.EnableAutoStart();
+            }
+            SetAutostartMenuItem();
+
+        }
+
+        private void SetAutostartMenuItem()
+        {
+            autoStartItem.Text = StartupManager.IsAutoStartEnabled() ? disableAutostartText : enableAutostartText;
+        }
+
+        private void OnWindowOpened(object sender, AutomationEventArgs e)
+        {
+            if (!isMonitoring) return;
+
+            var element = sender as AutomationElement;
+            if (element == null) return;
+
+            string name = element.Current.Name;
+            if (name == targetWindowTitle)
+            {
+                IntPtr hWnd = new IntPtr(element.Current.NativeWindowHandle);
+                if (hWnd != IntPtr.Zero)
+                {
+                    ShowWindow(hWnd, SW_HIDE); // 💨 Hide the window
+                }
+            }
+        }
+
+        private void InitialCheck()
+        {
+            if (!isMonitoring) return;
+
+            IntPtr hWnd = FindWindow(null, targetWindowTitle);
+            if (hWnd != IntPtr.Zero)
+            {
+                ShowWindow(hWnd, SW_HIDE); // Hide window
+            }
         }
 
         private void TrayIcon_MouseUp(object? sender, MouseEventArgs e)
@@ -83,23 +134,11 @@ namespace iCloudMonitor
             }
         }
 
-
-        private void CheckForWindow(object? sender, ElapsedEventArgs? e)
-        {
-            if (!isMonitoring) return;
-
-            IntPtr hWnd = FindWindow(null, targetWindowTitle);
-            if (hWnd != IntPtr.Zero)
-            {
-                ShowWindow(hWnd, SW_HIDE); // Hide window
-            }
-
-        }
-
         private void ToggleMonitoring(object? sender, EventArgs e)
         {
             isMonitoring = !isMonitoring;
-            toggleItem.Text = isMonitoring ? "Pause" : "Resume";
+            toggleItem.Text = isMonitoring ? pauseText : resumeText;
+            InitialCheck();
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
