@@ -432,7 +432,7 @@ namespace touch
         /// <param name="line">Add CRLF at the end if true</param>
         static void Log(string msg, bool line = true)
         {
-            if (!verboseOption)
+            if (verboseOption)
             {
                 Write(msg);
                 if (line) WriteLine();

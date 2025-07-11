@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29326.143
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36301.6 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FakeInstaller", "FakeInstaller.cs\FakeInstaller.csproj", "{EDC6684C-6413-4166-A2D1-8A3F8CC958A7}"
 EndProject
@@ -12,6 +12,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EndlessSummer", "EndlessSummer\EndlessSummer.csproj", "{B62EA856-1DEC-47AF-A33D-5A821DEE11D2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSomethings", "TestSomethings\TestSomethings.csproj", "{C4EEDE1A-1556-4544-8379-F1669E85539A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iCloudMonitor", "iCloudMonitor\iCloudMonitor.csproj", "{A11A9DED-D28B-4C13-B442-24B82AD6A05D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{C4EEDE1A-1556-4544-8379-F1669E85539A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C4EEDE1A-1556-4544-8379-F1669E85539A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C4EEDE1A-1556-4544-8379-F1669E85539A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A11A9DED-D28B-4C13-B442-24B82AD6A05D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A11A9DED-D28B-4C13-B442-24B82AD6A05D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A11A9DED-D28B-4C13-B442-24B82AD6A05D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A11A9DED-D28B-4C13-B442-24B82AD6A05D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

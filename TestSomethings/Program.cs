@@ -17,6 +17,13 @@ namespace TestSomethings
         public int b;
     }
 
+    enum MyEnum
+    {
+        Uno,
+        Duo,
+        Tres
+    }
+
     class Program
     {
 
@@ -26,6 +33,23 @@ namespace TestSomethings
 
         static void Main(string[] args)
         {
+            Bits32<MyEnum> bits = new Bits32<MyEnum>();
+            Console.WriteLine($"Value: {bits.Value}");
+            bits[MyEnum.Tres] = true;
+            Console.WriteLine($"Value: {bits.Value}");
+            Console.WriteLine(bits[MyEnum.Uno]);
+            bits[0] = true;
+            Console.WriteLine($"Value: {bits.Value}");
+            List<MyEnum> liste = bits.ValueAsSet;
+            foreach (var item in liste) Console.WriteLine(item.ToString());
+            bits.SetBits(true, MyEnum.Uno, MyEnum.Duo);
+            Console.WriteLine($"Value: {bits.Value}");
+            bits.ResetToBits(MyEnum.Duo);
+            Console.WriteLine($"Value: {bits.Value}");
+            Console.WriteLine(bits.Max);
+            bits.Value = 19;
+            Console.WriteLine($"Value: {bits.Value}");
+
             //Console.CancelKeyPress += Console_CancelKeyPress;
             //Investigating();
             //Processing();
@@ -34,7 +58,7 @@ namespace TestSomethings
             //thread.Start(data);
             //Thread.Sleep(2000);
             //thread.Abort();
-            TestIni();
+            //TestIni();
             Console.ReadKey();
         }
 
