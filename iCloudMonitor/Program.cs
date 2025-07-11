@@ -21,8 +21,7 @@ namespace iCloudMonitor
         private static string targetWindowTitle = "iCloud"; // CHANGE TO TARGET WINDOW TITLE
         private static string pauseText = "Pause";
         private static string resumeText = "Resume";
-        private static string enableAutostartText = "Enable Autostart";
-        private static string disableAutostartText = "Disable Autostart";
+        private static string autostartText = "Auto Start";
 
         private static bool isMonitoring = true;
         private NotifyIcon trayIcon;
@@ -36,13 +35,22 @@ namespace iCloudMonitor
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
+            // Show splash screen
+            using (var splash = new SplashWin())
+            {
+                splash.Show();
+                Application.DoEvents(); // Ensure it renders
+                System.Threading.Thread.Sleep(3000); // Wait 2 seconds
+            }
+
             Application.Run(new Program());
         }
 
         public Program()
         {
             toggleItem = new ToolStripMenuItem(pauseText, null, ToggleMonitoring);
-            autoStartItem = new ToolStripMenuItem(enableAutostartText, null, ToggleAutostart);
+            autoStartItem = new ToolStripMenuItem(autostartText, null, ToggleAutostart);
 
             trayMenu = new ContextMenuStrip();
             trayMenu.Items.Add(toggleItem);
@@ -51,7 +59,7 @@ namespace iCloudMonitor
 
             trayIcon = new NotifyIcon
             {
-                Icon = SystemIcons.Application,
+                Icon = Properties.Resources.MyAppIcon,
                 ContextMenuStrip = trayMenu,
                 Visible = true,
                 Text = "iCloudMonitor",
@@ -93,7 +101,7 @@ namespace iCloudMonitor
 
         private void SetAutostartMenuItem()
         {
-            autoStartItem.Text = StartupManager.IsAutoStartEnabled() ? disableAutostartText : enableAutostartText;
+            autoStartItem.Checked = StartupManager.IsAutoStartEnabled();
         }
 
         private void OnWindowOpened(object sender, AutomationEventArgs e)
