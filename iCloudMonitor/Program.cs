@@ -22,6 +22,7 @@ namespace iCloudMonitor
         private static string pauseText = "Pause";
         private static string resumeText = "Resume";
         private static string autostartText = "Auto Start";
+        private static string aboutText = "About";
 
         private static bool isMonitoring = true;
         private NotifyIcon trayIcon;
@@ -36,13 +37,7 @@ namespace iCloudMonitor
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            // Show splash screen
-            using (var splash = new SplashWin())
-            {
-                splash.Show();
-                Application.DoEvents(); // Ensure it renders
-                System.Threading.Thread.Sleep(3000); // Wait 2 seconds
-            }
+            ShowSplashScreen();
 
             Application.Run(new Program());
         }
@@ -55,6 +50,7 @@ namespace iCloudMonitor
             trayMenu = new ContextMenuStrip();
             trayMenu.Items.Add(toggleItem);
             trayMenu.Items.Add(autoStartItem);
+            trayMenu.Items.Add(aboutText, null, (s, e) => ShowSplashScreen());
             trayMenu.Items.Add("Exit", null, (s, e) => Application.Exit());
 
             trayIcon = new NotifyIcon
@@ -82,6 +78,17 @@ namespace iCloudMonitor
 
             SetAutostartMenuItem();
             InitialCheck();
+        }
+
+        private static void ShowSplashScreen()
+        {
+            // Show splash screen
+            using (var splash = new SplashWin())
+            {
+                splash.Show();
+                Application.DoEvents(); // Ensure it renders
+                System.Threading.Thread.Sleep(3000); // Wait 2 seconds
+            }
         }
 
         private void ToggleAutostart(object? sender, EventArgs e)
