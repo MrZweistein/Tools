@@ -58,7 +58,7 @@ namespace iCloudMonkey
                 Icon = Properties.Resources.MyAppIcon,
                 ContextMenuStrip = trayMenu,
                 Visible = true,
-                Text = "iCloudMonitor",
+                Text = "iCloudMonkey",
             };
             trayIcon.MouseUp += TrayIcon_MouseUp;
 
