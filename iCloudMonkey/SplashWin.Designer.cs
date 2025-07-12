@@ -1,4 +1,4 @@
-﻿namespace iCloudMonitor
+﻿namespace iCloudMonkey
 {
     partial class SplashWin
     {
@@ -52,7 +52,7 @@
             label1.Name = "label1";
             label1.Size = new Size(106, 15);
             label1.TabIndex = 1;
-            label1.Text = "iCloudMonitor 1.0";
+            label1.Text = "iCloudMonkey 1.0";
             // 
             // label2
             // 

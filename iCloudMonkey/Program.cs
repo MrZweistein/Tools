@@ -6,7 +6,7 @@ using System.Timers;
 using System.Windows.Forms;
 using System.Windows.Automation;
 
-namespace iCloudMonitor
+namespace iCloudMonkey
 {
     class Program : Form
     {

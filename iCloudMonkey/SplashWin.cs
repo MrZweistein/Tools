@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace iCloudMonitor
+namespace iCloudMonkey
 {
     public partial class SplashWin : Form
     {

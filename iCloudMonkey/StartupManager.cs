@@ -1,10 +1,10 @@
 ﻿using Microsoft.Win32;
 
-namespace iCloudMonitor
+namespace iCloudMonkey
 {
     internal class StartupManager
     {
-        private const string AppName = "iCloudMonitor"; // Change to your app name
+        private const string AppName = "iCloudMonkey"; // Change to your app name
 
         public static void EnableAutoStart()
         {
